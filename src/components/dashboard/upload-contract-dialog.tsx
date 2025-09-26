@@ -24,37 +24,31 @@ import { useToast } from '@/hooks/use-toast';
 
 
 /**
- * Attempts to parse a date string from various common formats.
- * @param dateString The date string to parse.
+ * Attempts to parse a date object from the AI into a JavaScript Date.
+ * @param dateObj The date object from the AI with day, month, year.
  * @returns A Date object if successful, otherwise null.
  */
-function parseDate(dateString: string | undefined | null): Date | null {
-  if (!dateString) return null;
+function parseDateFromObject(dateObj: { day: number | null; month: number | null; year: number | null } | undefined | null): Date | null {
+  if (!dateObj || dateObj.year === null || dateObj.month === null) {
+    return null;
+  }
+  // Day is optional, default to 1 if not present
+  const day = dateObj.day ?? 1;
+  
+  // Create date in UTC to avoid timezone issues.
+  // JavaScript months are 0-indexed (0=Jan, 11=Dec), so subtract 1.
+  const date = new Date(Date.UTC(dateObj.year, dateObj.month - 1, day));
 
-  // 1. Try direct parsing (handles ISO 8601 and many common formats like YYYY-MM-DD, and "Month day, year")
-  let date = new Date(dateString);
-  if (!isNaN(date.getTime())) {
+  // Check if the created date is valid
+  if (isNaN(date.getTime())) {
+    return null;
+  }
+  
+  // Check if the parts match, because `new Date` can overflow (e.g., month 13 becomes month 1 of next year)
+  if (date.getUTCFullYear() === dateObj.year && date.getUTCMonth() === dateObj.month - 1) {
     return date;
   }
 
-  // 2. Try formats like "DD-MM-YYYY" or "DD/MM/YYYY"
-  const parts = dateString.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-  if (parts) {
-    // Assuming DD-MM-YYYY
-    date = new Date(parseInt(parts[3], 10), parseInt(parts[2], 10) - 1, parseInt(parts[1], 10));
-    if (!isNaN(date.getTime())) {
-      return date;
-    }
-    // Assuming MM-DD-YYYY
-    date = new Date(parseInt(parts[3], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    if (!isNaN(date.getTime())) {
-      return date;
-    }
-  }
-
-  // Add more parsing logic for other formats if needed
-  
-  // Return null if all attempts fail
   return null;
 }
 
@@ -172,16 +166,12 @@ export function UploadContractDialog() {
       return;
     }
 
-    const effectiveDateStr = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
-    const expirationDateStr = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+    const finalEffectiveDate = parseDateFromObject(result.importantDates.effectiveDate) ?? new Date();
     const contractDurationStr = result.importantDates.contractDuration;
-
-    // Correctly establish the final effective date. Prioritize the parsed date from AI.
-    const finalEffectiveDate = parseDate(effectiveDateStr) ?? new Date();
 
     const getExpirationDate = (): string => {
       // Priority 1: Use explicit expiration date if valid
-      const parsedExpirationDate = parseDate(expirationDateStr);
+      const parsedExpirationDate = parseDateFromObject(result.importantDates.expirationDate);
       if (parsedExpirationDate) {
         return parsedExpirationDate.toISOString();
       }
@@ -193,7 +183,7 @@ export function UploadContractDialog() {
         const unit = durationParts[1];
 
         if (!isNaN(amount) && unit) {
-          const newDate = new Date(finalEffectiveDate); // Use the finalEffectiveDate
+          const newDate = new Date(finalEffectiveDate);
           if (unit.startsWith('year')) {
             newDate.setFullYear(newDate.getFullYear() + amount);
             return newDate.toISOString();
@@ -245,6 +235,12 @@ export function UploadContractDialog() {
       resetState();
     }
   }
+  
+  const formatDateObject = (dateObj: { day: number | null; month: number | null; year: number | null } | null | undefined) => {
+    if (!dateObj || !dateObj.year || !dateObj.month) return 'N/A';
+    return `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day ?? 1).padStart(2, '0')}`;
+  }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -309,9 +305,10 @@ export function UploadContractDialog() {
                   <InfoItem icon={CircleDollarSign} label="Contract Value" value={result.metadata.contractValue || 'NA'} />
                   <Separator />
                   <h4 className="font-semibold text-md">Important Dates & Duration</h4>
-                  {result.importantDates.dates?.map(d => <InfoItem key={d.dateType} icon={Calendar} label={d.dateType} value={d.date} />)}
+                    <InfoItem icon={Calendar} label="Effective Date" value={formatDateObject(result.importantDates.effectiveDate)} />
+                    <InfoItem icon={Calendar} label="Expiration Date" value={formatDateObject(result.importantDates.expirationDate)} />
+                    <InfoItem icon={Calendar} label="Renewal Date" value={formatDateObject(result.importantDates.renewalDate)} />
                   {result.importantDates.contractDuration && <InfoItem icon={Clock} label="Contract Duration" value={result.importantDates.contractDuration} />}
-                  {result.importantDates.expectedCompletionDate && <InfoItem icon={CheckCircle} label="Expected Completion" value={result.importantDates.expectedCompletionDate} />}
 
                   <Separator />
                   <h4 className="font-semibold text-md">Obligations</h4>
