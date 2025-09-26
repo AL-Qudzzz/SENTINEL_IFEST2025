@@ -211,12 +211,14 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
 
         if (comments) {
             comments.forEach(comment => {
-                combinedLog.push({
-                    id: `comment-${comment.id}`,
-                    user: comment.authorName,
-                    action: `commented: "${comment.commentText}"`,
-                    time: comment.createdAt.toDate(),
-                });
+                if (comment.createdAt) {
+                    combinedLog.push({
+                        id: `comment-${comment.id}`,
+                        user: comment.authorName,
+                        action: `commented: "${comment.commentText}"`,
+                        time: comment.createdAt.toDate(),
+                    });
+                }
             });
         }
 
@@ -235,14 +237,14 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         
         // Also add the contract creation event
         if (contract.createdAt) {
+             const createdAtDate = (contract.createdAt as any).toDate ? (contract.createdAt as any).toDate() : new Date(contract.createdAt as any);
              combinedLog.push({
                 id: `creation-${contract.id}`,
                 user: 'System',
                 action: 'Contract draft created',
-                time: (contract.createdAt as any).toDate(),
+                time: createdAtDate,
              });
         }
-
 
         return combinedLog.sort((a, b) => b.time.getTime() - a.time.getTime());
     }, [comments, approvalSteps, contract]);
