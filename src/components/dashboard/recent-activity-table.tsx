@@ -72,7 +72,6 @@ export function RecentActivityTable() {
               <TableRow key={i}>
                 <TableCell>
                   <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2 mt-2" />
                 </TableCell>
                 <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
@@ -82,9 +81,6 @@ export function RecentActivityTable() {
               <TableRow key={contract.id}>
                 <TableCell>
                   <div className="font-medium">{contract.title}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {contract.partner}
-                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
