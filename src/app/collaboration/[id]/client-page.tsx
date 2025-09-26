@@ -372,18 +372,24 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         }
     };
 
-    const formatTimestamp = (timestamp: any) => {
+    const formatTimestamp = (timestamp: any): string => {
         if (!timestamp) return 'just now';
         try {
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            if (date) {
-                return formatDistanceToNow(date, { addSuffix: true });
-            }
-            return 'just now';
+          // Check if it's a Firestore Timestamp and has a toDate method
+          if (timestamp && typeof timestamp.toDate === 'function') {
+            return formatDistanceToNow(timestamp.toDate(), { addSuffix: true });
+          }
+          // Fallback for Date objects or ISO strings
+          const date = new Date(timestamp);
+          if (!isNaN(date.getTime())) {
+            return formatDistanceToNow(date, { addSuffix: true });
+          }
         } catch (e) {
-            return 'just now';
+          // If any error occurs during conversion, return a safe default
+          console.error("Error formatting timestamp:", e);
         }
-    };
+        return 'just now';
+      };
     
     const currentStage = approvalSteps?.find(s => s.status === 'Pending')?.stepName || contract.status;
     const isFinalStage = approvalSteps && approvalSteps.every(s => s.status === 'Approved');
@@ -475,7 +481,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                                     <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="absolute top-0 right-0 h-7 w-7 opacity-0 group-hover:opacity-100"
+                                    className="absolute top-0 right-0 h-7 w-7 opacity-50 hover:opacity-100"
                                     onClick={() => openDeleteDialog(comment.id)}
                                     >
                                     <Trash2 className="h-4 w-4 text-destructive/70" />
@@ -632,3 +638,5 @@ export default function CollaborationClientPage({ id }: { id: string }) {
         </div>
     );
 }
+
+    
