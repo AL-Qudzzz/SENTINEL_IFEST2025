@@ -176,6 +176,8 @@ export function UploadContractDialog() {
     const expirationDateStr = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
     const contractDurationStr = result.importantDates.contractDuration;
 
+    const finalEffectiveDate = parseDate(effectiveDateStr) ?? new Date();
+
     const getExpirationDate = (): string => {
         // Priority 1: Use explicit expiration date if valid
         const parsedExpirationDate = parseDate(expirationDateStr);
@@ -184,14 +186,13 @@ export function UploadContractDialog() {
         }
 
         // Priority 2: Calculate from effective date and duration
-        const parsedEffectiveDate = parseDate(effectiveDateStr);
-        if (parsedEffectiveDate && contractDurationStr) {
+        if (finalEffectiveDate && contractDurationStr) {
             const durationParts = contractDurationStr.toLowerCase().split(' ');
             const amount = parseInt(durationParts[0], 10);
             const unit = durationParts[1];
 
             if (!isNaN(amount) && unit) {
-                const newDate = new Date(parsedEffectiveDate);
+                const newDate = new Date(finalEffectiveDate);
                 if (unit.startsWith('year')) {
                     newDate.setFullYear(newDate.getFullYear() + amount);
                     return newDate.toISOString();
@@ -207,13 +208,12 @@ export function UploadContractDialog() {
             }
         }
 
-        // Priority 3: Default to one year from now
-        const oneYearFromNow = new Date();
-        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-        return oneYearFromNow.toISOString();
+        // Priority 3: Default to one year from the effective date
+        const oneYearFromEffectiveDate = new Date(finalEffectiveDate);
+        oneYearFromEffectiveDate.setFullYear(oneYearFromEffectiveDate.getFullYear() + 1);
+        return oneYearFromEffectiveDate.toISOString();
     };
 
-    const finalEffectiveDate = parseDate(effectiveDateStr) ?? new Date();
 
     const newContract: Omit<Contract, 'id'> = {
       title: fileName || 'Untitled Contract',
