@@ -133,11 +133,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="p-2 flex flex-row items-center justify-between">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+             <Link href="/profile" className="w-full">
                 <Button
                   variant="ghost"
                   className="h-12 w-full justify-start gap-2 px-2"
+                  aria-label="View Profile"
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
@@ -159,27 +159,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     )}
                   </div>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="start" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <CircleUser className="mr-2" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
           </SidebarFooter>
         </div>
       </Sidebar>
