@@ -263,6 +263,51 @@
         "email",
         "departmentId"
       ]
+    },
+    "ContractVersion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContractVersion",
+      "type": "object",
+      "description": "Represents a specific version of a contract document, tracking its history.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the version." },
+        "contractId": { "type": "string", "description": "Reference to the parent contract." },
+        "versionNumber": { "type": "number", "description": "Sequential version number." },
+        "textContent": { "type": "string", "description": "The full text content of this version." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of version creation." },
+        "authorId": { "type": "string", "description": "ID of the user who created this version." }
+      },
+      "required": ["id", "contractId", "versionNumber", "textContent", "createdAt", "authorId"]
+    },
+    "ContractComment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ContractComment",
+      "type": "object",
+      "description": "Represents a comment made on a contract.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the comment." },
+        "contractId": { "type": "string", "description": "Reference to the parent contract." },
+        "authorId": { "type": "string", "description": "ID of the user who made the comment." },
+        "commentText": { "type": "string", "description": "The content of the comment." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of comment creation." }
+      },
+      "required": ["id", "contractId", "authorId", "commentText", "createdAt"]
+    },
+    "ApprovalStep": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ApprovalStep",
+      "type": "object",
+      "description": "Represents a single step in a contract's approval workflow.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID for the approval step." },
+        "contractId": { "type": "string", "description": "Reference to the parent contract." },
+        "stepName": { "type": "string", "description": "Name of the approval stage (e.g., 'Legal Review')." },
+        "approverId": { "type": "string", "description": "ID of the assigned approver." },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected", "Waiting"], "description": "Current status of the approval step." },
+        "order": { "type": "number", "description": "The order of this step in the workflow." },
+        "approvedAt": { "type": "string", "format": "date-time", "description": "Timestamp of when this step was approved." }
+      },
+      "required": ["id", "contractId", "stepName", "approverId", "status", "order"]
     }
   },
   "auth": {
@@ -396,8 +441,44 @@
             }
           ]
         }
+      },
+       {
+        "path": "/contracts/{contractId}/versions/{versionId}",
+        "definition": {
+          "entityName": "ContractVersion",
+          "schema": { "$ref": "#/backend/entities/ContractVersion" },
+          "description": "Stores historical versions of a contract document.",
+          "params": [
+            { "name": "contractId", "description": "The unique ID of the parent contract." },
+            { "name": "versionId", "description": "The unique ID of the contract version." }
+          ]
+        }
+      },
+      {
+        "path": "/contracts/{contractId}/comments/{commentId}",
+        "definition": {
+          "entityName": "ContractComment",
+          "schema": { "$ref": "#/backend/entities/ContractComment" },
+          "description": "Stores comments related to a specific contract.",
+          "params": [
+            { "name": "contractId", "description": "The unique ID of the parent contract." },
+            { "name": "commentId", "description": "The unique ID of the comment." }
+          ]
+        }
+      },
+      {
+        "path": "/contracts/{contractId}/approvals/{approvalId}",
+        "definition": {
+          "entityName": "ApprovalStep",
+          "schema": { "$ref": "#/backend/entities/ApprovalStep" },
+          "description": "Stores the approval workflow steps for a specific contract.",
+          "params": [
+            { "name": "contractId", "description": "The unique ID of the parent contract." },
+            { "name": "approvalId", "description": "The unique ID of the approval step." }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to provide a secure, scalable, and easily maintainable system for managing contracts. It leverages denormalization to achieve authorization independence and structural segregation to simplify security rules. User data is stored under `/users/{userId}`. Companies and Departments are stored in top-level collections, as are Contracts. Contract documents are stored in the `documents` subcollection of the `contracts` collection. Notifications and Risk Assessments are kept as subcollections of Contracts, with each document containing a denormalized copy of relevant contract data. This design enables efficient querying and avoids the need for complex `get()` calls in security rules, ensuring that authorization can be performed independently at each document level. Specifically, the design supports QAPs by segregating data with different access needs into distinct collections and subcollections and by denormalizing authorization data to prevent rules from acting as filters."
+    "reasoning": "The Firestore structure is designed to provide a secure, scalable, and easily maintainable system for managing contracts. It leverages denormalization to achieve authorization independence and structural segregation to simplify security rules. User data is stored under `/users/{userId}`. Companies and Departments are stored in top-level collections, as are Contracts. Contract documents are stored in the `documents` subcollection of the `contracts` collection. Notifications and Risk Assessments are kept as subcollections of Contracts, with each document containing a denormalized copy of relevant contract data. To support collaboration, `versions`, `comments`, and `approvals` subcollections are added under each contract, allowing for fine-grained access control and data organization. This design enables efficient querying and avoids the need for complex `get()` calls in security rules, ensuring that authorization can be performed independently at each document level. Specifically, the design supports QAPs by segregating data with different access needs into distinct collections and subcollections and by denormalizing authorization data to prevent rules from acting as filters."
   }
 }
