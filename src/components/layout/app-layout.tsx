@@ -115,7 +115,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             >
               <span className="font-headline text-lg font-bold">SENTINEL</span>
             </div>
-             <SidebarTrigger className="group-data-[collapsible=icon]:ml-auto" />
           </SidebarHeader>
           <SidebarContent className="flex-1">
             <SidebarGroup>
