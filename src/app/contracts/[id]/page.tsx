@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -220,7 +221,7 @@ function ContractDetailView({ contract, contractId }: { contract: Contract, cont
                       <AlertTitle>High Risk Detected!</AlertTitle>
                       <AlertDescription>
                         A risk score of {analysisResult.riskScore} has been identified. It is highly recommended to redraft this contract.
-                      </AlerDescription>
+                      </AlertDescription>
                     </Alert>
                 )}
 
@@ -375,3 +376,5 @@ export default function ContractDetailPage({ params: { id } }: { params: { id: s
     </div>
   );
 }
+
+    
