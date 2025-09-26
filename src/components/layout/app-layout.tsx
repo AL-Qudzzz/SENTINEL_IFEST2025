@@ -46,6 +46,7 @@ import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { NotificationBell } from './NotificationBell';
 
 const navItems = [
   {
@@ -123,7 +124,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-2">
+        <SidebarFooter className="p-2 flex flex-row gap-2 items-center group-data-[collapsible=icon]:flex-col">
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

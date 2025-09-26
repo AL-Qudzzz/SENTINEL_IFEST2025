@@ -1,7 +1,17 @@
 
 import type { Timestamp } from 'firebase/firestore';
 
-export type Status = 'Active' | 'In Review' | 'Drafting' | 'Expired' | 'Pending Renewal' | 'Terminated';
+export type Status = 
+  | 'Active' 
+  | 'In Review' 
+  | 'Drafting' 
+  | 'Expired' 
+  | 'Pending Renewal' 
+  | 'Terminated'
+  | 'Legal Review'
+  | 'Finance Approval'
+  | 'Executive Sign-off';
+
 
 export interface Contract {
     id: string;
