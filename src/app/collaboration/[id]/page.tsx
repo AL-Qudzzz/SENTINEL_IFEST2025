@@ -60,8 +60,7 @@ const approvalWorkflow = [
     step: 'Finance Approval',
     approver: 'John Smith',
     status: 'Pending',
-    avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib
--rb-4.1.0&q=80&w=1080',
+    avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib-rb-4.1.0&q=80&w=1080',
     initials: 'JS',
   },
   {
@@ -422,5 +421,3 @@ function CollaborationClientPage({ id }: { id: string }) {
 export default function CollaborationPage({ params }: { params: { id: string } }) {
   return <CollaborationClientPage id={params.id} />;
 }
-
-    
