@@ -248,15 +248,16 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
             });
         }
         
-        // Also add the contract creation event
         if (contract.createdAt) {
              const createdAtDate = (contract.createdAt as any).toDate ? (contract.createdAt as any).toDate() : new Date(contract.createdAt as any);
-             combinedLog.push({
-                id: `creation-${contract.id}`,
-                user: 'System',
-                action: 'Contract draft created',
-                time: createdAtDate,
-             });
+             if (createdAtDate) {
+                 combinedLog.push({
+                    id: `creation-${contract.id}`,
+                    user: 'System',
+                    action: 'Contract draft created',
+                    time: createdAtDate,
+                 });
+             }
         }
 
         return combinedLog.sort((a, b) => b.time.getTime() - a.time.getTime());
@@ -375,7 +376,10 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         if (!timestamp) return 'just now';
         try {
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return formatDistanceToNow(date, { addSuffix: true });
+            if (date) {
+                return formatDistanceToNow(date, { addSuffix: true });
+            }
+            return 'just now';
         } catch (e) {
             return 'just now';
         }
@@ -460,10 +464,10 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                                     <AvatarImage src={comment.authorAvatar} alt={comment.authorName} data-ai-hint="person portrait" />
                                     <AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-center">
+                                <div className="flex-1 pr-8">
+                                    <div className="flex justify-between items-start">
                                         <p className="text-sm font-semibold">{comment.authorName}</p>
-                                        <p className="text-xs text-muted-foreground">{formatTimestamp(comment.createdAt)}</p>
+                                        <p className="text-xs text-muted-foreground flex-shrink-0">{formatTimestamp(comment.createdAt)}</p>
                                     </div>
                                     <p className="text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{comment.commentText}</p>
                                 </div>
@@ -628,5 +632,3 @@ export default function CollaborationClientPage({ id }: { id: string }) {
         </div>
     );
 }
-
-    
