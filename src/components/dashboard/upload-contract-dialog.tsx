@@ -15,7 +15,6 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, Users, CircleDollarSign, Wand2, Clock, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/extract-contract-data-flow';
-import { extractTextFromFile } from '@/ai/flows/extract-text-from-file-flow';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFirebase } from '@/firebase/provider';
@@ -23,14 +22,6 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
-function fileToDataUri(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,23 +49,55 @@ export function UploadContractDialog() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
+  
     resetState();
     setFileName(file.name);
     setFileType(file.type);
     setIsParsing(true);
     setError(null);
-
+  
     try {
-      const dataUri = await fileToDataUri(file);
-      const textResult = await extractTextFromFile({ fileDataUri: dataUri });
+      let text = '';
+      if (file.type === 'application/pdf') {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/parse-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to parse PDF.');
+        }
+        const data = await response.json();
+        text = data.text;
 
-      if (!textResult.extractedText) {
-          throw new Error("AI could not extract text from the document. It might be empty, corrupted, or an image-only file.");
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.endsWith('.docx')) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/api/parse-docx', {
+          method: 'POST',
+          body: formData,
+        });
+         if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to parse DOCX.');
+        }
+        const data = await response.json();
+        text = data.text;
+
+      } else if (file.type === 'text/plain') {
+        text = await file.text();
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}. Please upload a PDF, DOCX, or TXT file.`);
       }
-
-      setContractText(textResult.extractedText);
-
+  
+      if (!text) {
+        throw new Error("Could not extract text from the document. It might be empty, corrupted, or an image-only file.");
+      }
+  
+      setContractText(text);
+  
     } catch (err: any) {
       console.error('File parsing error:', err);
       setError(err.message || "An unexpected error occurred during file processing.");
