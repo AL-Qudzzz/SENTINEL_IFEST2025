@@ -18,7 +18,6 @@ import {
   Circle,
   Clock,
   Send,
-  MoreVertical,
   Copy,
   Link as LinkIcon,
   ArrowLeft,
@@ -39,11 +38,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import type { Contract } from '@/lib/types';
+import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking } from '@/firebase';
+import { doc, collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import type { Contract, ContractComment } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 
 
 const approvalWorkflow = [
@@ -70,11 +71,6 @@ const approvalWorkflow = [
   },
 ];
 
-const comments = [
-    { name: 'Jane Doe', text: 'Clause 3.2 needs clarification on liability limits.', time: '2 hours ago', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080', initials: 'JD' },
-    { name: 'Alex Ray', text: 'Can we move the effective date to the 1st of next month?', time: '4 hours ago', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080', initials: 'AR' },
-];
-
 const activityLog = [
     { user: 'Jane Doe', action: 'Approved Legal Review', time: '1 hour ago' },
     { user: 'Alex Ray', action: 'Edited Clause 5.1', time: '3 hours ago' },
@@ -82,8 +78,8 @@ const activityLog = [
 ];
 
 const collaborators = [
-    { name: 'You', email: 'jane.doe@acme.com', role: 'Owner', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080', initials: 'JD' },
-    { name: 'Alex Ray', email: 'alex.ray@acme.com', role: 'Can Edit', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080', initials: 'AR' }
+    { name: 'You', email: 'jane.doe@acme.com', role: 'Owner', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib,rb-4.1.0&q=80&w=1080', initials: 'JD' },
+    { name: 'Alex Ray', email: 'alex.ray@acme.com', role: 'Can Edit', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib,rb-4.1.0&q=80&w=1080', initials: 'AR' }
 ];
 
 function WorkflowStep({ step, approver, status, avatar, initials }: (typeof approvalWorkflow)[0]) {
@@ -190,7 +186,42 @@ function ShareDialog({contractTitle}: {contractTitle: string}) {
     )
 }
 
-function CollaborationView({ contract }: { contract: Contract }) {
+function CollaborationView({ contract, contractId }: { contract: Contract, contractId: string }) {
+    const { firestore, user } = useFirebase();
+    const [newComment, setNewComment] = useState('');
+
+    const commentsQuery = useMemoFirebase(
+        () => (firestore && contractId ? query(collection(firestore, 'contracts', contractId, 'comments'), orderBy('createdAt', 'asc')) : null),
+        [firestore, contractId]
+    );
+    const { data: comments, isLoading: isLoadingComments } = useCollection<ContractComment>(commentsQuery);
+
+    const handleCommentSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newComment.trim() || !user || !firestore) return;
+
+        const commentData = {
+            authorId: user.uid,
+            authorName: user.displayName || user.email || 'Anonymous',
+            authorAvatar: user.photoURL || `https://avatar.vercel.sh/${user.uid}`,
+            commentText: newComment,
+            createdAt: serverTimestamp(),
+        };
+
+        addDocumentNonBlocking(collection(firestore, 'contracts', contractId, 'comments'), commentData);
+        setNewComment('');
+    };
+
+    const formatTimestamp = (timestamp: any) => {
+        if (!timestamp) return 'just now';
+        try {
+            const date = timestamp.toDate();
+            return formatDistanceToNow(date, { addSuffix: true });
+        } catch (e) {
+            return 'just now';
+        }
+    };
+    
     return (
         <div className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {/* Main Contract Editor */}
@@ -244,26 +275,46 @@ function CollaborationView({ contract }: { contract: Contract }) {
                 <CardContent className="flex-1 flex flex-col">
                     <TabsContent value="comments" className="flex-1 flex flex-col gap-4">
                       <div className="flex-1 space-y-4 overflow-y-auto">
-                        {comments.map((comment, index) => (
-                            <div key={index} className="flex items-start gap-3">
+                        {isLoadingComments && Array.from({ length: 2 }).map((_, i) => (
+                           <div key={i} className="flex items-start gap-3">
+                               <Skeleton className="h-8 w-8 rounded-full" />
+                               <div className="flex-1 space-y-2">
+                                   <div className="flex justify-between items-center">
+                                       <Skeleton className="h-4 w-20" />
+                                       <Skeleton className="h-3 w-16" />
+                                   </div>
+                                   <Skeleton className="h-8 w-full" />
+                               </div>
+                           </div>
+                        ))}
+                        {!isLoadingComments && comments?.map((comment) => (
+                            <div key={comment.id} className="flex items-start gap-3">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={comment.avatar} alt={comment.name} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{comment.initials}</AvatarFallback>
+                                    <AvatarImage src={comment.authorAvatar} alt={comment.authorName} data-ai-hint="person portrait" />
+                                    <AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-center">
-                                        <p className="text-sm font-semibold">{comment.name}</p>
-                                        <p className="text-xs text-muted-foreground">{comment.time}</p>
+                                        <p className="text-sm font-semibold">{comment.authorName}</p>
+                                        <p className="text-xs text-muted-foreground">{formatTimestamp(comment.createdAt)}</p>
                                     </div>
-                                    <p className="text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{comment.text}</p>
+                                    <p className="text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{comment.commentText}</p>
                                 </div>
                             </div>
                         ))}
+                        {!isLoadingComments && comments?.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-8">No comments yet. Be the first to add one!</p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 pt-4 border-t">
-                          <Input placeholder="Add a comment..." />
-                          <Button size="icon"><Send/></Button>
-                      </div>
+                      <form onSubmit={handleCommentSubmit} className="flex items-center gap-2 pt-4 border-t">
+                          <Input 
+                            placeholder="Add a comment..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            disabled={!user}
+                          />
+                          <Button type="submit" size="icon" disabled={!newComment.trim() || !user}><Send/></Button>
+                      </form>
                     </TabsContent>
                     <TabsContent value="activity" className="space-y-4">
                        {activityLog.map((log, index) => (
@@ -350,7 +401,7 @@ export default function CollaborationPage({ params: { id } }: { params: { id: st
 
         <main className="grid flex-1 gap-6">
             {isLoading && <LoadingSkeleton />}
-            {!isLoading && contract && <CollaborationView contract={contract} />}
+            {!isLoading && contract && <CollaborationView contract={contract} contractId={id} />}
             {!isLoading && !contract && (
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center h-96 gap-4">

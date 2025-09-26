@@ -15,3 +15,12 @@ export interface Contract {
     createdAt: Timestamp | Date;
     riskScore?: number;
 }
+
+export interface ContractComment {
+    id: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    commentText: string;
+    createdAt: Timestamp;
+}
