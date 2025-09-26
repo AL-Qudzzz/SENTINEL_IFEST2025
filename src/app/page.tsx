@@ -100,15 +100,9 @@ export default function Home() {
   );
   const { data: contracts, isLoading: isLoadingContracts } = useCollection<Contract>(contractsQuery);
 
-  const welcomeMessage = useMemo(() => {
-    if (isAppUserLoading) {
-      return <Skeleton className="h-5 w-64" />;
-    }
-    if (appUser?.displayName) {
-      return `Welcome back, ${appUser.displayName}! Here's a summary of your contract landscape.`;
-    }
-    return "Welcome back! Here's a summary of your contract landscape.";
-  }, [appUser, isAppUserLoading]);
+  const welcomeMessage = `Welcome back, ${appUser?.displayName ?? ''}! Here's a summary of your contract landscape.`;
+  const defaultWelcomeMessage = "Welcome back! Here's a summary of your contract landscape.";
+
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -117,9 +111,15 @@ export default function Home() {
           <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
             Dashboard
           </h1>
-          <p className="text-muted-foreground min-h-5">
-            {welcomeMessage}
-          </p>
+          <div className="text-muted-foreground min-h-5">
+            {isAppUserLoading ? (
+                <Skeleton className="h-5 w-64" />
+            ) : (
+                <p>
+                    {appUser?.displayName ? welcomeMessage : defaultWelcomeMessage}
+                </p>
+            )}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <NotificationBell>
