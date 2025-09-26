@@ -86,3 +86,40 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .print\:hidden {
+    display: none;
+  }
+  .print\:block {
+    display: block;
+  }
+  .print\:p-0 {
+    padding: 0;
+  }
+  .print\:gap-0 {
+    gap: 0;
+  }
+  .print\:shadow-none {
+    box-shadow: none;
+  }
+  .print\:border-none {
+    border: none;
+  }
+  .print\:rounded-none {
+    border-radius: 0;
+  }
+  .print\:h-screen {
+    height: 100vh;
+  }
+  .print\:text-black {
+    color: #000;
+  }
+  .print\:bg-white {
+    background-color: #fff;
+  }
+}

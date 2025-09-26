@@ -27,6 +27,7 @@ import {
   Wand2,
   PencilRuler,
   Save,
+  Printer,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -55,7 +56,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
-import type { Contract, ContractComment, ApprovalStep, ApprovalStatus, Status } from '@/lib/types';
+import type { Contract, ContractComment, ApprovalStep, Status } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
@@ -418,13 +419,13 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
             // 1. Approve the current step
             const currentStep = approvalSteps[currentStepIndex];
             const currentStepRef = doc(firestore, 'contracts', contractId, 'approvals', currentStep.id);
-            batch.update(currentStepRef, { status: 'Approved' as ApprovalStatus, approvedAt: serverTimestamp() });
+            batch.update(currentStepRef, { status: 'Approved', approvedAt: serverTimestamp() });
 
             // 2. Activate the next step (if it exists)
             const nextStep = approvalSteps[currentStepIndex + 1];
             if (nextStep) {
                 const nextStepRef = doc(firestore, 'contracts', contractId, 'approvals', nextStep.id);
-                batch.update(nextStepRef, { status: 'Pending' as ApprovalStatus });
+                batch.update(nextStepRef, { status: 'Pending' });
 
                 // 3. Update the main contract status to 'Pending Approval'
                 batch.update(contractRef, { status: 'Pending Approval' as Status, updatedAt: serverTimestamp() });
@@ -444,6 +445,10 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handlePrint = () => {
+        window.print();
     };
 
     const formatTimestamp = (timestamp: any): string => {
@@ -469,53 +474,68 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const canSubmit = approvalSteps?.some(s => s.status === 'Pending');
 
     return (
-        <div className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4 print:block">
         {/* Main Contract Editor */}
-        <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6">
-          <Card className="flex-1 flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6 print:block">
+          <Card className="flex-1 flex flex-col print:shadow-none print:border-none print:rounded-none">
+            <CardHeader className="flex flex-row items-center justify-between print:hidden">
               <div>
                 <CardTitle>{contract.title}</CardTitle>
                 <CardDescription>
-                  Status: <span className="text-yellow-500 font-semibold">{contract.status}</span>. Version 2.1.
+                  Status: <Badge variant={contract.status === 'Active' ? 'default' : 'secondary'} className="font-semibold">{contract.status}</Badge>. Version 2.1.
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={handleGenerateSmartDraft} disabled={isGeneratingDraft}>
-                    {isGeneratingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2" />}
-                    Smart Draft
-                </Button>
-                {isDraftModified && (
-                    <Button variant="outline" onClick={handleSaveChanges} disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2" />}
-                        Save Changes
+                {contract.status === 'Active' ? (
+                    <Button variant="outline" onClick={handlePrint}>
+                        <Printer className="mr-2" />
+                        Print to PDF
+                    </Button>
+                ) : (
+                    <>
+                        <Button variant="outline" onClick={handleGenerateSmartDraft} disabled={isGeneratingDraft}>
+                            {isGeneratingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2" />}
+                            Smart Draft
+                        </Button>
+                        {isDraftModified && (
+                            <Button variant="outline" onClick={handleSaveChanges} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2" />}
+                                Save Changes
+                            </Button>
+                        )}
+                    </>
+                )}
+
+                <ShareDialog contractTitle={contract.title} />
+
+                {contract.status !== 'Active' && (
+                    <Button onClick={handleAdvanceStage} disabled={isSubmitting || !canSubmit || isFinalStage}>
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isFinalStage ? "Fully Approved" : "Submit for Next Stage"}
                     </Button>
                 )}
-                <ShareDialog contractTitle={contract.title} />
-                <Button onClick={handleAdvanceStage} disabled={isSubmitting || !canSubmit || isFinalStage}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isFinalStage ? "Fully Approved" : "Submit for Next Stage"}
-                </Button>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-4">
-              {isDraftModified && (
-                  <Alert>
-                    <PencilRuler className="h-4 w-4" />
-                    <AlertTitle>Draft Updated</AlertTitle>
-                    <AlertDescription>
-                      The contract text was updated by Smart Draft. Review the changes and click "Save Changes" to apply them.
-                    </AlertDescription>
-                  </Alert>
-              )}
-              {draftError && (
-                 <Alert variant="destructive">
-                    <AlertTitle>Drafting Failed</AlertTitle>
-                    <AlertDescription>{draftError}</AlertDescription>
-                 </Alert>
-              )}
+            <CardContent className="flex-1 flex flex-col gap-4 print:p-0">
+              <div className="print:hidden">
+                {isDraftModified && (
+                    <Alert>
+                      <PencilRuler className="h-4 w-4" />
+                      <AlertTitle>Draft Updated</AlertTitle>
+                      <AlertDescription>
+                        The contract text was updated by Smart Draft. Review the changes and click "Save Changes" to apply them.
+                      </AlertDescription>
+                    </Alert>
+                )}
+                {draftError && (
+                   <Alert variant="destructive">
+                      <AlertTitle>Drafting Failed</AlertTitle>
+                      <AlertDescription>{draftError}</AlertDescription>
+                   </Alert>
+                )}
+              </div>
               <Textarea
-                className="flex-1 font-mono text-xs"
+                className="flex-1 font-mono text-xs print:h-screen print:border-none print:p-0 print:text-black print:bg-white"
                 value={contractContent}
                 onChange={(e) => {
                     setContractContent(e.target.value);
@@ -527,7 +547,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         </div>
 
         {/* Right Sidebar */}
-        <div className="lg:col-span-1 xl:col-span-1 flex flex-col gap-6">
+        <div className="lg:col-span-1 xl:col-span-1 flex flex-col gap-6 print:hidden">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -710,8 +730,8 @@ export default function CollaborationClientPage({ id }: { id: string }) {
     const { data: contract, isLoading } = useDoc<Contract>(contractRef);
 
     return (
-        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-        <header className="flex items-center gap-4">
+        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 print:p-0 print:gap-0">
+        <header className="flex items-center gap-4 print:hidden">
             <Link href="/collaboration" className='hidden md:inline-block'>
                 <ArrowLeft className="h-6 w-6 text-muted-foreground hover:text-foreground" />
             </Link>
@@ -725,7 +745,7 @@ export default function CollaborationClientPage({ id }: { id: string }) {
             </div>
         </header>
 
-        <main className="grid flex-1 gap-6">
+        <main className="grid flex-1 gap-6 print:block">
             {isLoading && <LoadingSkeleton />}
             {!isLoading && contract && <CollaborationView contract={contract} contractId={id} />}
             {!isLoading && !contract && (
@@ -742,6 +762,3 @@ export default function CollaborationClientPage({ id }: { id: string }) {
         </div>
     );
 }
-
-    
-    
