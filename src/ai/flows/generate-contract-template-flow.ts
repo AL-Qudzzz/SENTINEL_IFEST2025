@@ -20,8 +20,12 @@ const prompt = ai.definePrompt({
     output: { schema: GenerateContractTemplateOutputSchema },
     prompt: `You are an expert legal AI assistant. Your task is to convert an existing contract text into a professional, reusable contract template.
 
-    Analyze the provided contract text. Identify specific details like names, dates, and values. Replace these specific details with generic, clearly-marked placeholders (e.g., [Nama Pihak Pertama], [Tanggal Efektif], [Nilai Kontrak]).
-
+    Analyze the provided contract text. Identify specific details like names, dates, and values.
+    
+    Then, generate a professionally formatted contract template. In this template, you must:
+    1.  Use the specific details you extracted from the original text (e.g., use the actual company names, dates, and contract values you found).
+    2.  For any important information that you cannot find in the original text, use a generic, clearly-marked placeholder (e.g., [Alamat Pihak Pertama], [Jabatan Penandatangan]).
+    
     The final output should be a well-structured, professionally formatted contract template that is easy to read and use for future agreements. The entire template must be in Bahasa Indonesia.
 
     **Original Contract Text:**
