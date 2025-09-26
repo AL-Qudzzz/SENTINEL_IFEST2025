@@ -3,10 +3,15 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /contracts/{document=**} {
-      allow read: if true;
-      allow create: if true;
-      allow update, delete: if false; // Keep update and delete restricted for now
+    // By default, deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Allow authenticated users to read and create contracts.
+    // This includes anonymously authenticated users.
+    match /contracts/{contractId} {
+      allow read, create: if request.auth != null;
     }
   }
 }
