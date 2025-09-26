@@ -20,6 +20,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+const SIDEBAR_WIDTH_EXPANDED = "16rem"
+const SIDEBAR_WIDTH_COLLAPSED = "4rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
@@ -48,16 +50,18 @@ const SidebarProvider = React.forwardRef<
     {
       className,
       style,
-      children,
       ...props
     },
     ref
   ) => {
-    const [open, setOpen] = React.useState(false);
+    const isMobile = useIsMobile()
+    const [open, setOpen] = React.useState(false)
 
     const toggleSidebar = React.useCallback(() => {
-        setOpen(o => !o);
-    }, [setOpen])
+      if (isMobile) {
+        setOpen((o) => !o)
+      }
+    }, [isMobile])
 
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
@@ -73,7 +77,6 @@ const SidebarProvider = React.forwardRef<
       window.addEventListener("keydown", handleKeyDown)
       return () => window.removeEventListener("keydown", handleKeyDown)
     }, [toggleSidebar])
-    
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
@@ -90,6 +93,8 @@ const SidebarProvider = React.forwardRef<
           <div
             style={
               {
+                "--sidebar-width-expanded": SIDEBAR_WIDTH_EXPANDED,
+                "--sidebar-width-collapsed": SIDEBAR_WIDTH_COLLAPSED,
                 ...style,
               } as React.CSSProperties
             }
@@ -99,9 +104,7 @@ const SidebarProvider = React.forwardRef<
             )}
             ref={ref}
             {...props}
-          >
-            {children}
-          </div>
+          />
         </TooltipProvider>
       </SidebarContext.Provider>
     )
@@ -124,9 +127,11 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
+    const isMobile = useIs-mobile()
     const { open, setOpen } = useSidebar()
-    
-    return (
+
+    if (isMobile) {
+      return (
         <Sheet open={open} onOpenChange={setOpen} {...props}>
           <SheetContent
             ref={ref}
@@ -142,6 +147,22 @@ const Sidebar = React.forwardRef<
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
+      )
+    }
+
+    return (
+      <div
+        ref={ref}
+        data-sidebar="sidebar"
+        className={cn(
+          "group/sidebar z-20 w-[var(--sidebar-width-collapsed)] shrink-0 transition-[width] ease-in-out",
+          "hover:w-[var(--sidebar-width-expanded)]",
+          className
+        )}
+        {...props}
+      >
+        <div className="flex h-full w-full flex-col">{children}</div>
+      </div>
     )
   }
 )
@@ -151,7 +172,7 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar, open } = useSidebar()
+  const { toggleSidebar } = useSidebar()
 
   return (
     <Button
@@ -159,14 +180,14 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-8 w-8", className)}
+      className={cn("h-8 w-8 md:hidden", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      {open ? <X/> : <PanelLeft />}
+      <PanelLeft />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -297,7 +318,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 group-hover/sidebar:ml-0 group-hover/sidebar:opacity-100 group-data-[collapsible=true]/sidebar:ml-[-100%] group-data-[collapsible=true]/sidebar:opacity-0 [&>svg]:size-4 [&>svg]:shrink-0",
         className
       )}
       {...props}
@@ -368,7 +389,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-hover/sidebar:justify-start [&:not(.group-hover/sidebar)]:justify-center [&>span:last-child]:truncate [&>span]:opacity-0 [&>span]:transition-opacity group-hover/sidebar:[&>span]:opacity-100 [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -438,6 +459,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
+          className="group-hover/sidebar:hidden"
           {...tooltip}
         />
       </Tooltip>

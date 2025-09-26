@@ -106,7 +106,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader className="h-16 items-center flex justify-between">
             <div
               data-sidebar="header-content"
-              className="flex items-center gap-2 overflow-hidden"
+              className="flex items-center gap-2 overflow-hidden group-hover/sidebar:w-full w-0"
             >
               <span className="font-headline text-lg font-bold">SENTINEL</span>
             </div>
@@ -143,7 +143,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
                     <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col items-start overflow-hidden">
+                  <div className="flex flex-col items-start overflow-hidden w-0 group-hover/sidebar:w-full transition-[width]">
                     {isAppUserLoading ? (
                       <div className='space-y-1'>
                         <Skeleton className="h-4 w-20" />
