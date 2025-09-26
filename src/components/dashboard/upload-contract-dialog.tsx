@@ -23,6 +23,42 @@ import type { Contract } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 
+/**
+ * Attempts to parse a date string from various common formats.
+ * @param dateString The date string to parse.
+ * @returns A Date object if successful, otherwise null.
+ */
+function parseDate(dateString: string | undefined | null): Date | null {
+  if (!dateString) return null;
+
+  // 1. Try direct parsing (handles ISO 8601 and many common formats like YYYY-MM-DD)
+  let date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+
+  // 2. Try formats like "DD-MM-YYYY" or "DD/MM/YYYY"
+  const parts = dateString.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (parts) {
+    // Assuming DD-MM-YYYY
+    date = new Date(parseInt(parts[3], 10), parseInt(parts[2], 10) - 1, parseInt(parts[1], 10));
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+    // Assuming MM-DD-YYYY
+    date = new Date(parseInt(parts[3], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+  }
+
+  // Add more parsing logic for other formats if needed
+  
+  // Return null if all attempts fail
+  return null;
+}
+
+
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [contractText, setContractText] = useState('');
@@ -142,35 +178,31 @@ export function UploadContractDialog() {
 
     const getExpirationDate = (): string => {
         // Priority 1: Use explicit expiration date if valid
-        if (expirationDateStr) {
-            const date = new Date(expirationDateStr);
-            if (!isNaN(date.getTime())) {
-                return date.toISOString();
-            }
+        const parsedExpirationDate = parseDate(expirationDateStr);
+        if (parsedExpirationDate) {
+            return parsedExpirationDate.toISOString();
         }
 
         // Priority 2: Calculate from effective date and duration
-        if (effectiveDateStr && contractDurationStr) {
-            const effectiveDate = new Date(effectiveDateStr);
-            if (!isNaN(effectiveDate.getTime())) {
-                const durationParts = contractDurationStr.toLowerCase().split(' ');
-                const amount = parseInt(durationParts[0], 10);
-                const unit = durationParts[1];
+        const parsedEffectiveDate = parseDate(effectiveDateStr);
+        if (parsedEffectiveDate && contractDurationStr) {
+            const durationParts = contractDurationStr.toLowerCase().split(' ');
+            const amount = parseInt(durationParts[0], 10);
+            const unit = durationParts[1];
 
-                if (!isNaN(amount) && unit) {
-                    const newDate = new Date(effectiveDate);
-                    if (unit.startsWith('year')) {
-                        newDate.setFullYear(newDate.getFullYear() + amount);
-                        return newDate.toISOString();
-                    }
-                    if (unit.startsWith('month')) {
-                        newDate.setMonth(newDate.getMonth() + amount);
-                        return newDate.toISOString();
-                    }
-                    if (unit.startsWith('day')) {
-                        newDate.setDate(newDate.getDate() + amount);
-                        return newDate.toISOString();
-                    }
+            if (!isNaN(amount) && unit) {
+                const newDate = new Date(parsedEffectiveDate);
+                if (unit.startsWith('year')) {
+                    newDate.setFullYear(newDate.getFullYear() + amount);
+                    return newDate.toISOString();
+                }
+                if (unit.startsWith('month')) {
+                    newDate.setMonth(newDate.getMonth() + amount);
+                    return newDate.toISOString();
+                }
+                if (unit.startsWith('day')) {
+                    newDate.setDate(newDate.getDate() + amount);
+                    return newDate.toISOString();
                 }
             }
         }
@@ -181,11 +213,13 @@ export function UploadContractDialog() {
         return oneYearFromNow.toISOString();
     };
 
+    const finalEffectiveDate = parseDate(effectiveDateStr) ?? new Date();
+
     const newContract: Omit<Contract, 'id'> = {
       title: fileName || 'Untitled Contract',
       partner: result.metadata.partiesInvolved || 'N/A',
       status: 'Drafting',
-      effectiveDate: effectiveDateStr ? new Date(effectiveDateStr).toISOString() : new Date().toISOString(),
+      effectiveDate: finalEffectiveDate.toISOString(),
       expirationDate: getExpirationDate(),
       contractValue: result.metadata.contractValue || 'N/A',
       textContent: contractText,
