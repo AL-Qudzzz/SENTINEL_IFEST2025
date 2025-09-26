@@ -59,18 +59,20 @@ export function UploadContractDialog() {
         setError('Failed to read file.');
         console.error('FileReader error:', e);
       };
+      // For now, we only support text files for demo purposes.
+      // For other file types, we allow upload but show a warning.
       if (file.type.startsWith('text/')) {
         reader.readAsText(file);
       } else {
-        setError('Unsupported file type for this demo. Please upload a text (.txt) file.');
-        setContractText('');
+        setError('File uploaded, but analysis is only supported for .txt files at this time.');
+        setContractText(''); // Clear text if not a text file
       }
     }
   };
 
   const handleAnalyze = async () => {
     if (!contractText) {
-      setError('Please upload a contract file first.');
+      setError('Please upload a .txt contract file to analyze.');
       return;
     }
     setIsLoading(true);
@@ -108,7 +110,7 @@ export function UploadContractDialog() {
       expirationDate: expirationDate ? new Date(expirationDate).toISOString() : new Date().toISOString(),
       contractValue: result.metadata.contractValue || 'N/A',
       textContent: contractText,
-      fileType: fileType || 'text/plain',
+      fileType: fileType || 'application/octet-stream',
       createdAt: serverTimestamp(),
     };
 
@@ -149,7 +151,7 @@ export function UploadContractDialog() {
         <DialogHeader>
           <DialogTitle>Upload & Analyze Contract</DialogTitle>
           <DialogDescription>
-            Upload a contract file (.txt for now) to automatically extract key information.
+            Upload a contract file to automatically extract key information.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -163,19 +165,19 @@ export function UploadContractDialog() {
                 <p className="mb-2 text-sm text-muted-foreground">
                   <span className="font-semibold">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-muted-foreground">TXT files only (PDF/DOC coming soon)</p>
+                <p className="text-xs text-muted-foreground">TXT, PDF, or DOC files</p>
                 {fileName && (
                   <p className="mt-2 text-sm font-medium text-primary">{fileName}</p>
                 )}
               </div>
-              <Input id="file-upload-dialog" type="file" className="hidden" onChange={handleFileChange} accept=".txt" />
+              <Input id="file-upload-dialog" type="file" className="hidden" onChange={handleFileChange} accept=".txt,.pdf,.doc,.docx" />
             </Label>
           </div>
 
           {error && (
-            <Alert variant="destructive">
+            <Alert variant={error.includes('only supported for .txt') ? 'default' : 'destructive'} className={error.includes('only supported for .txt') ? 'border-yellow-500/50 text-yellow-600 [&>svg]:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:[&>svg]:text-yellow-500' : ''}>
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
+              <AlertTitle>{error.includes('only supported for .txt') ? 'Note' : 'Error'}</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
