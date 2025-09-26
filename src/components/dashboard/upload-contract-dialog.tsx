@@ -18,7 +18,8 @@ import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFirebase } from '@/firebase/provider';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -91,9 +92,9 @@ export function UploadContractDialog() {
   const handleSaveContract = async () => {
     if (!result || !firestore) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No extracted data to save or database not available.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No extracted data to save or database not available.',
       });
       return;
     }
@@ -113,22 +114,15 @@ export function UploadContractDialog() {
       createdAt: serverTimestamp(),
     };
 
-    try {
-      const contractsCol = collection(firestore, 'contracts');
-      await addDoc(contractsCol, newContract);
-      toast({
-        title: "Success",
-        description: "Contract has been saved successfully.",
-      });
-      handleOpenChange(false);
-    } catch (e: any) {
-      console.error("Error saving contract: ", e);
-      toast({
-        variant: "destructive",
-        title: "Save Failed",
-        description: e.message || "Could not save the contract to the database.",
-      });
-    }
+    const contractsCol = collection(firestore, 'contracts');
+    // Use the non-blocking version which has better error handling
+    addDocumentNonBlocking(contractsCol, newContract);
+
+    toast({
+      title: 'Success',
+      description: 'Contract has been saved successfully.',
+    });
+    handleOpenChange(false);
   };
 
   const handleOpenChange = (open: boolean) => {
