@@ -21,6 +21,8 @@ import {
   MoreVertical,
   Copy,
   Link as LinkIcon,
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,11 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useDoc, useFirebase, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Contract } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 
 const approvalWorkflow = [
@@ -107,7 +114,7 @@ function WorkflowStep({ step, approver, status, avatar, initials }: (typeof appr
   );
 }
 
-function ShareDialog() {
+function ShareDialog({contractTitle}: {contractTitle: string}) {
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -115,7 +122,7 @@ function ShareDialog() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Share 'MSA with Innovate Corp'</DialogTitle>
+                    <DialogTitle>Share '{contractTitle}'</DialogTitle>
                     <DialogDescription>
                         Anyone with the link can view this document.
                     </DialogDescription>
@@ -183,38 +190,28 @@ function ShareDialog() {
     )
 }
 
-export default function CollaborationPage() {
-  return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
-      <header>
-        <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
-          Synergy Collaboration Hub
-        </h1>
-        <p className="text-muted-foreground">
-          Draft, review, and approve contracts seamlessly with your team.
-        </p>
-      </header>
-
-      <main className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
+function CollaborationView({ contract }: { contract: Contract }) {
+    return (
+        <div className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {/* Main Contract Editor */}
         <div className="lg:col-span-2 xl:col-span-3 flex flex-col gap-6">
           <Card className="flex-1 flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>MSA with Innovate Corp</CardTitle>
+                <CardTitle>{contract.title}</CardTitle>
                 <CardDescription>
                   Currently in <span className="text-yellow-500 font-semibold">Finance Approval</span> stage. Version 2.1.
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
-                <ShareDialog />
+                <ShareDialog contractTitle={contract.title} />
                 <Button>Submit for Next Stage</Button>
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex">
               <Textarea
                 className="flex-1 font-mono text-xs"
-                defaultValue={`This Master Services Agreement ("Agreement") is made and entered into as of the Effective Date by and between Quantum Solutions, a Delaware corporation ("Provider"), and Innovate Corp, a California corporation ("Client").\n\n1. SERVICES. Provider agrees to perform the services ("Services") as described in one or more Statements of Work ("SOW") to be mutually agreed upon and signed by both parties.\n\n2. TERM. The term of this Agreement shall commence on the Effective Date and shall continue for a period of one (1) year, unless terminated earlier as provided herein.\n\n3. PAYMENT. Client agrees to pay Provider the fees set forth in each SOW. Invoices are payable within thirty (30) days of receipt.`}
+                defaultValue={contract.textContent}
               />
             </CardContent>
           </Card>
@@ -283,7 +280,88 @@ export default function CollaborationPage() {
              </Tabs>
           </Card>
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    );
+}
+
+function LoadingSkeleton() {
+    return (
+        <div className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="lg:col-span-2 xl:col-span-3">
+                <Card className="flex-1 flex flex-col">
+                    <CardHeader>
+                        <Skeleton className="h-8 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-96 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-1 xl:col-span-1 flex flex-col gap-6">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-7 w-3/4" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-10 w-full" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-40 w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    )
+}
+
+export default function CollaborationPage({ params: { id } }: { params: { id: string } }) {
+    const { firestore } = useFirebase();
+
+    const contractRef = useMemoFirebase(
+        () => (firestore && id ? doc(firestore, 'contracts', id) : null),
+        [firestore, id]
+    );
+
+    const { data: contract, isLoading } = useDoc<Contract>(contractRef);
+
+    return (
+        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+        <header className="flex items-center gap-4">
+            <Link href="/contracts" className='hidden md:inline-block'>
+                <ArrowLeft className="h-6 w-6 text-muted-foreground hover:text-foreground" />
+            </Link>
+            <div>
+                <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
+                    Synergy Collaboration Hub
+                </h1>
+                <p className="text-muted-foreground">
+                    {isLoading ? <Skeleton className="h-4 w-64 mt-1"/> : `Collaborating on: ${contract?.title ?? 'contract'}`}
+                </p>
+            </div>
+        </header>
+
+        <main className="grid flex-1 gap-6">
+            {isLoading && <LoadingSkeleton />}
+            {!isLoading && contract && <CollaborationView contract={contract} />}
+            {!isLoading && !contract && (
+                <Card>
+                    <CardContent className="flex flex-col items-center justify-center h-96 gap-4">
+                        <p className="text-muted-foreground">Contract not found.</p>
+                        <Button asChild>
+                            <Link href="/contracts">Go back to Contracts</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+        </main>
+        </div>
+    );
 }

@@ -20,7 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Users } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import type { Contract, Status } from '@/lib/types';
 import { format } from 'date-fns';
@@ -142,7 +142,13 @@ export default function ContractsPage() {
                           <Button variant="ghost" size="icon" asChild>
                             <Link href={`/contracts/${contract.id}`}>
                               <Eye className="h-4 w-4" />
-                              <span className="sr-only">View contract</span>
+                              <span className="sr-only">View contract details</span>
+                            </Link>
+                          </Button>
+                          <Button variant="ghost" size="icon" asChild>
+                            <Link href={`/collaboration/${contract.id}`}>
+                              <Users className="h-4 w-4" />
+                              <span className="sr-only">Collaborate on contract</span>
                             </Link>
                           </Button>
                         </TableCell>
