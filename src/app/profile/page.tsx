@@ -6,11 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
-import { updateProfile, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
+import { updateProfile, sendPasswordResetEmail, deleteUser, signOut } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase, Pencil } from 'lucide-react';
+import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase, Pencil, LogOut } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -160,6 +160,11 @@ export default function ProfilePage() {
             description: 'Could not send password reset email. Please try again.',
         });
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
   };
 
   const handleDeleteAccount = async () => {
@@ -353,6 +358,10 @@ export default function ProfilePage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
+                    <Button variant="outline" className='w-full justify-start' onClick={handleLogout}>
+                      <LogOut className="mr-2" />
+                      Log Out
+                    </Button>
                 </CardContent>
             </Card>
         </div>

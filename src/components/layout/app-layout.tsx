@@ -131,7 +131,30 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="p-2 flex flex-row items-center justify-between">
+          <SidebarFooter className="p-2 flex flex-col items-center justify-between">
+             <Link href="/profile" className="w-full">
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent w-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
+                      <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start overflow-hidden w-0 group-hover/sidebar:w-full transition-[width]">
+                      {isAppUserLoading ? (
+                        <div className='space-y-1'>
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium">{appUser?.displayName || 'User'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {appUser?.role || 'Role'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                </div>
+             </Link>
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
