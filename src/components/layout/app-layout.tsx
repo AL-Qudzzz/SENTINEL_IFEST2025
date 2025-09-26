@@ -13,6 +13,8 @@ import {
   ShieldAlert,
   Users,
   Bell,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -42,9 +44,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Icons } from '@/components/icons';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { NotificationBell } from './NotificationBell';
+import Link from 'next/link';
 
 const navItems = [
   {
@@ -93,7 +95,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         className="border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
         <div className="flex h-full flex-col">
-          <SidebarHeader className="h-16 items-center">
+          <SidebarHeader className="h-16 items-center flex justify-between">
             <div
               data-sidebar="header-content"
               className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0"
@@ -124,10 +126,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarContent>
           <SidebarFooter className="p-2 flex flex-col gap-2">
             <NotificationBell>
-                 <SidebarMenuButton tooltip="Notifications" className="w-full justify-start group-data-[collapsible=icon]:justify-center">
-                    <Bell />
-                    <span>Notification</span>
-                 </SidebarMenuButton>
+                 <div className="relative flex items-center w-full">
+                    <Button variant="ghost" className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 h-12 px-2">
+                        <Bell />
+                        <span className='overflow-hidden group-data-[collapsible=icon]:w-0'>Notification</span>
+                    </Button>
+                 </div>
             </NotificationBell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -158,9 +162,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent side="right" align="start" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <CircleUser className="mr-2" />
-                  <span>Profile</span>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <CircleUser className="mr-2" />
+                    <span>Profile</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="mr-2" />
@@ -180,5 +186,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    
