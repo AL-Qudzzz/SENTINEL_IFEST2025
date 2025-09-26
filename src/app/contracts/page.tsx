@@ -32,7 +32,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Trash2 } from 'lucide-react';
+import { Users, Trash2, Search } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import type { Contract, Status } from '@/lib/types';
 import { format } from 'date-fns';
@@ -59,12 +59,13 @@ const getRiskVariant = (score?: number): "destructive" | "secondary" | "default"
   return 'default';
 };
 
-const contractStatuses: Status[] = ['Active', 'In Review', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated'];
+const contractStatuses: Status[] = ['Active', 'In Review', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated', 'Legal Review', 'Finance Approval', 'Executive Sign-off'];
 
 export default function ContractsPage() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [filter, setFilter] = useState<Status | 'All'>('All');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
@@ -79,6 +80,13 @@ export default function ContractsPage() {
   }, [firestore, filter]);
 
   const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
+
+  const filteredContracts = useMemo(() => {
+    if (!contracts) return [];
+    return contracts.filter(contract =>
+      contract.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [contracts, searchTerm]);
 
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
@@ -145,12 +153,24 @@ export default function ContractsPage() {
             </CardHeader>
             <CardContent>
               <Tabs value={filter} onValueChange={(value) => setFilter(value as Status | 'All')}>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="All">All</TabsTrigger>
-                  {contractStatuses.map(status => (
-                    <TabsTrigger key={status} value={status}>{status}</TabsTrigger>
-                  ))}
-                </TabsList>
+                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                  <TabsList className="overflow-x-auto overflow-y-hidden">
+                    <TabsTrigger value="All">All</TabsTrigger>
+                    {contractStatuses.map(status => (
+                      <TabsTrigger key={status} value={status} className="whitespace-nowrap">{status}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                   <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by title..."
+                      className="pl-9"
+                      aria-label="Search contracts"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
                 <TabsContent value={filter} className="mt-0">
                   <Table>
                     <TableHeader>
@@ -174,7 +194,7 @@ export default function ContractsPage() {
                           <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                         </TableRow>
                       ))}
-                      {!isLoading && contracts?.map((contract) => (
+                      {!isLoading && filteredContracts.map((contract) => (
                         <TableRow key={contract.id}>
                           <TableCell className="font-medium">
                              <Link href={`/contracts/${contract.id}`} className="hover:underline">
@@ -207,10 +227,10 @@ export default function ContractsPage() {
                           </TableCell>
                         </TableRow>
                       ))}
-                      {!isLoading && contracts?.length === 0 && (
+                      {!isLoading && filteredContracts.length === 0 && (
                          <TableRow>
                            <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                             No contracts found for this filter.
+                             No contracts found.
                            </TableCell>
                          </TableRow>
                       )}
@@ -256,3 +276,5 @@ export default function ContractsPage() {
     </>
   );
 }
+
+    

@@ -32,14 +32,6 @@ export default function Home() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search contracts..."
-              className="pl-9"
-              aria-label="Search contracts"
-            />
-          </div>
           <UploadContractDialog />
         </div>
       </header>
@@ -82,3 +74,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
