@@ -1,23 +1,86 @@
-import {
-  FileText,
-  FileUp,
-  Gavel,
-  Bell,
-  Search,
-} from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+
+'use client';
+
+import { useMemo } from 'react';
+import { FileText, Gavel, Bell, ShieldAlert } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { RecentActivityTable } from '@/components/dashboard/recent-activity-table';
 import { UpcomingDeadlines } from '@/components/dashboard/upcoming-deadlines';
 import { RiskOverviewChart } from '@/components/dashboard/risk-overview-chart';
 import { UploadContractDialog } from '@/components/dashboard/upload-contract-dialog';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+import type { Contract } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function DashboardStats() {
+  const { firestore } = useFirebase();
+
+  const contractsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
+
+  const stats = useMemo(() => {
+    if (!contracts) {
+      return {
+        totalContracts: 0,
+        activeAgreements: 0,
+        pendingRenewal: 0,
+        highRisk: 0,
+      };
+    }
+
+    const totalContracts = contracts.length;
+    const activeAgreements = contracts.filter(c => c.status === 'Active').length;
+    const pendingRenewal = contracts.filter(c => c.status === 'Pending Renewal').length;
+    const highRisk = contracts.filter(c => (c.riskScore ?? 0) > 75).length;
+
+    return { totalContracts, activeAgreements, pendingRenewal, highRisk };
+  }, [contracts]);
+  
+  if (isLoading) {
+    return (
+      <>
+        <Skeleton className="h-[126px] w-full" />
+        <Skeleton className="h-[126px] w-full" />
+        <Skeleton className="h-[126px] w-full" />
+        <Skeleton className="h-[126px] w-full" />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <StatsCard
+        title="Total Contracts"
+        value={stats.totalContracts.toString()}
+        change="All contracts in the system"
+        icon={FileText}
+      />
+      <StatsCard
+        title="Active Agreements"
+        value={stats.activeAgreements.toString()}
+        change="Currently active contracts"
+        icon={Gavel}
+      />
+      <StatsCard
+        title="Pending Renewal"
+        value={stats.pendingRenewal.toString()}
+        change="Contracts awaiting renewal approval"
+        icon={Bell}
+      />
+      <StatsCard
+        title="High-Risk"
+        value={stats.highRisk.toString()}
+        change="Contracts with risk score > 75"
+        icon={ShieldAlert}
+      />
+    </>
+  );
+}
+
 
 export default function Home() {
   return (
@@ -37,30 +100,7 @@ export default function Home() {
       </header>
 
       <main className="grid flex-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Total Contracts"
-          value="1,284"
-          change="+20.1% from last month"
-          icon={FileText}
-        />
-        <StatsCard
-          title="Active Agreements"
-          value="932"
-          change="+18.3% from last month"
-          icon={Gavel}
-        />
-        <StatsCard
-          title="Pending Renewal"
-          value="57"
-          change="12 expiring in 30 days"
-          icon={Bell}
-        />
-        <StatsCard
-          title="High-Risk"
-          value="23"
-          change="+4 since last week"
-          icon={FileUp}
-        />
+        <DashboardStats />
 
         <div className="grid gap-6 lg:col-span-2 lg:row-span-2">
           <RecentActivityTable />
@@ -74,5 +114,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
