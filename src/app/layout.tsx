@@ -5,8 +5,7 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import { AppLayout } from '@/components/layout/app-layout';
 import './globals.css';
-import { FirebaseClientProvider, useFirebase, initiateAnonymousSignIn } from '@/firebase';
-import { useEffect } from 'react';
+import { FirebaseClientProvider } from '@/firebase';
 
 // This metadata is not used in the client-rendered layout,
 // but it's good practice to keep it for potential static generation.
@@ -14,32 +13,6 @@ import { useEffect } from 'react';
 //   title: 'Sentinel: Intelligent Contract Lifecycle Management',
 //   description: 'Proactively manage your contracts with AI-powered insights and automation.',
 // };
-
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const { auth, user, isUserLoading } = useFirebase();
-
-  useEffect(() => {
-    // If auth is ready, user is not loaded yet, and there's no user object,
-    // initiate anonymous sign-in.
-    if (auth && !isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
-    }
-  }, [auth, user, isUserLoading]);
-
-  // While checking user status, show a loader and do not render children.
-  // This prevents child components from making unauthenticated Firestore requests.
-  if (isUserLoading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <p>Authenticating...</p>
-      </div>
-    );
-  }
-
-  // Once loading is complete and user status is known, render the children.
-  return <>{children}</>;
-}
-
 
 export default function RootLayout({
   children,
@@ -60,9 +33,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
-           <AuthGate>
-             <AppLayout>{children}</AppLayout>
-           </AuthGate>
+          <AppLayout>{children}</AppLayout>
         </FirebaseClientProvider>
         <Toaster />
       </body>
