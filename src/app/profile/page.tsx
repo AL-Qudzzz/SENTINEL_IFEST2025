@@ -80,13 +80,10 @@ export default function ProfilePage() {
   };
 
   const uploadPhoto = async (file: File): Promise<string> => {
-    if (!user || !storage) {
-        throw new Error("User or storage service not available.");
-    }
-    
+    // The check in onSubmit ensures user and storage are available here.
     const fileExtension = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExtension}`;
-    const storageRef = ref(storage, `profile-pictures/${user.uid}/${fileName}`);
+    const storageRef = ref(storage!, `profile-pictures/${user!.uid}/${fileName}`);
 
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
@@ -95,8 +92,8 @@ export default function ProfilePage() {
 
 
   const onSubmit = async (data: ProfileFormValues) => {
-    if (!user || !firestore) {
-      toast({ variant: "destructive", title: "Error", description: "Not authenticated. Please log in." });
+    if (!user || !firestore || !storage) {
+      toast({ variant: "destructive", title: "Error", description: "Services not available. Please try again later." });
       return;
     }
     
