@@ -145,3 +145,4 @@ export const useContract = (): ContractContextType => {
     }
     return context;
 };
+

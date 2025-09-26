@@ -59,3 +59,4 @@ export const SemanticSearchOutputSchema = z.object({
   matchingContractIds: z.array(z.string()).describe('An array of contract IDs that best match the search query.'),
 });
 export type SemanticSearchOutput = z.infer<typeof SemanticSearchOutputSchema>;
+
