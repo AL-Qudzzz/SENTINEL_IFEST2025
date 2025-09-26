@@ -1,27 +1,27 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow logged-in users to read and write to the 'contracts' collection
-    // and its subcollections.
+    // Aturan untuk koleksi 'contracts'
     match /contracts/{contractId} {
-      // Allow reading a single document and the entire collection list
-      allow get, list: if request.auth != null;
-
-      // Allow creating, updating, and deleting documents
-      allow write: if request.auth != null;
       
-      // Allow access to subcollections like comments and approvals
-      match /{allPaths=**} {
+      // Izinkan pengguna yang sudah login untuk membaca (get) atau menulis (create, update, delete) dokumen kontrak individu.
+      allow get, write: if request.auth != null;
+      
+      // Izinkan pengguna yang sudah login untuk membaca (list) seluruh koleksi 'contracts'.
+      allow list: if request.auth != null;
+
+      // Aturan untuk sub-koleksi 'comments'
+      match /comments/{commentId} {
+        // Izinkan baca dan tulis komentar jika pengguna sudah login.
         allow read, write: if request.auth != null;
       }
-    }
 
-    // Default-deny all other access
-    match /{document=**} {
-      allow read, write: if 
-          path[0] == 'contracts' ? request.auth != null :
-          false;
+      // Aturan untuk sub-koleksi 'approvals'
+      match /approvals/{approvalId} {
+        // Izinkan baca dan tulis langkah persetujuan jika pengguna sudah login.
+        allow read, write: if request.auth != null;
+      }
     }
   }
 }
