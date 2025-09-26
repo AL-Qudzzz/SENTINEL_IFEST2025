@@ -59,7 +59,7 @@ export function RecentActivityTable() {
           Overview of the latest contract updates and statuses.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 flex flex-col">
         <Table>
           <TableHeader>
             <TableRow>
@@ -93,7 +93,7 @@ export function RecentActivityTable() {
             ))}
             {!isLoading && recentContracts?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground">
+                <TableCell colSpan={3} className="h-full text-center text-muted-foreground">
                   No recent activity. Upload a contract to get started.
                 </TableCell>
               </TableRow>
