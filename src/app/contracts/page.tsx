@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,14 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,7 +71,12 @@ function ContractsPageContent() {
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
     try {
+      // Handles Firestore Timestamp, ISO string, or existing Date objects
       const jsDate = typeof date.toDate === 'function' ? date.toDate() : new Date(date);
+      // Check if the created date is valid
+      if (isNaN(jsDate.getTime())) {
+        return 'Invalid Date';
+      }
       return format(jsDate, 'MMM d, yyyy');
     } catch (e) {
       console.error('Error formatting date:', e);
@@ -133,13 +131,13 @@ function ContractsPageContent() {
         <main className="flex flex-1 flex-col">
           <Card>
             <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
-              <div>
+               <div className="flex-1">
                 <CardTitle>Contracts List</CardTitle>
                 <CardDescription>
                   Browse and manage all contracts stored in the system.
                 </CardDescription>
               </div>
-              <div className="relative w-full sm:w-auto sm:max-w-xs">
+               <div className="relative w-full sm:w-auto sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by title..."
