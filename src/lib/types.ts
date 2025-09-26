@@ -3,7 +3,6 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type Status = 
   | 'Active' 
-  | 'In Review' 
   | 'Drafting' 
   | 'Expired' 
   | 'Pending Renewal' 

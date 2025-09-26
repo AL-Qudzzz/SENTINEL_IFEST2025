@@ -28,7 +28,6 @@ import Link from 'next/link';
 
 const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
-  'In Review': 'secondary',
   'Drafting': 'outline',
   'Expired': 'destructive',
   'Pending Renewal': 'default',

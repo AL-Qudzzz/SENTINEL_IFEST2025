@@ -106,7 +106,7 @@ export function UploadContractDialog() {
     const newContract: Omit<Contract, 'id'> = {
       title: fileName || 'Untitled Contract',
       partner: result.metadata.partiesInvolved || 'N/A',
-      status: 'In Review',
+      status: 'Drafting',
       effectiveDate: effectiveDate ? new Date(effectiveDate).toISOString() : new Date().toISOString(),
       expirationDate: expirationDate ? new Date(expirationDate).toISOString() : new Date().toISOString(),
       contractValue: result.metadata.contractValue || 'N/A',

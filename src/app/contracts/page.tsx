@@ -42,7 +42,6 @@ import { useToast } from '@/hooks/use-toast';
 
 const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
-  'In Review': 'secondary',
   'Drafting': 'outline',
   'Expired': 'destructive',
   'Pending Renewal': 'default',
@@ -57,7 +56,7 @@ const getRiskVariant = (score?: number): "destructive" | "secondary" | "default"
   return 'default';
 };
 
-const contractStatuses: Status[] = ['Active', 'In Review', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated', 'Pending Approval'];
+const contractStatuses: Status[] = ['Active', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated', 'Pending Approval'];
 
 export default function ContractsPage() {
   const { firestore } = useFirebase();

@@ -25,11 +25,11 @@ import type { Contract, Status } from '@/lib/types';
 
 const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
-  'In Review': 'secondary',
   'Drafting': 'outline',
   'Expired': 'destructive',
   'Pending Renewal': 'default',
   'Terminated': 'destructive',
+  'Pending Approval': 'secondary',
 };
 
 export function RecentActivityTable() {
