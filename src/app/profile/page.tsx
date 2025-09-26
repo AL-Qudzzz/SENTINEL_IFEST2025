@@ -45,7 +45,6 @@ export default function ProfilePage() {
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [localPhotoURL, setLocalPhotoURL] = useState<string | undefined>(undefined);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -81,9 +80,8 @@ export default function ProfilePage() {
   };
 
   const handleUpload = async (file: File): Promise<string | null> => {
-    if (!user || !storage || !firestore) return null;
-    setIsUploading(true);
-
+    if (!user || !storage) return null;
+    
     const fileExtension = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExtension}`;
     const storageRef = ref(storage, `profile-pictures/${user.uid}/${fileName}`);
@@ -101,8 +99,6 @@ export default function ProfilePage() {
         description: 'Could not upload your profile picture. Please try again.',
       });
       return null;
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -254,9 +250,9 @@ export default function ProfilePage() {
                                       size="icon"
                                       className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-background"
                                       onClick={() => fileInputRef.current?.click()}
-                                      disabled={isUploading || isSubmitting}
+                                      disabled={isSubmitting}
                                     >
-                                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4"/>}
+                                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4"/>}
                                         <span className="sr-only">Edit picture</span>
                                     </Button>
                                 </div>
@@ -312,8 +308,8 @@ export default function ProfilePage() {
                                     <Input value={appUser?.role || 'N/A'} disabled />
                                 </div>
                             </div>
-                            <Button type="submit" disabled={isSubmitting || isUploading}>
-                                {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 <Save className="mr-2"/>
                                 Save Changes
                             </Button>
