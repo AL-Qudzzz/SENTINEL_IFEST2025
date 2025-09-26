@@ -56,7 +56,7 @@ const getRiskVariant = (score?: number): "destructive" | "secondary" | "default"
   return 'default';
 };
 
-const contractStatuses: Status[] = ['Active', 'Drafting', 'Pending Approval', 'Pending Renewal', 'Expired', 'Terminated'];
+const contractStatuses: Status[] = ['Active', 'Drafting', 'Pending Approval', 'Pending Renewal', 'Expired'];
 
 export default function ContractsPage() {
   const { firestore } = useFirebase();
