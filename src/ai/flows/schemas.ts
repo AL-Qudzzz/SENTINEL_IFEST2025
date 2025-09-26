@@ -35,3 +35,27 @@ export const GenerateContractTemplateOutputSchema = z.object({
     templateContractText: z.string().describe('The full text of the professionally formatted, reusable contract template.'),
 });
 export type GenerateContractTemplateOutput = z.infer<typeof GenerateContractTemplateOutputSchema>;
+
+export const ExtractTextFromFileInputSchema = z.object({
+    fileDataUri: z.string().describe("A file (PDF, DOCX, TXT) as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+});
+export type ExtractTextFromFileInput = z.infer<typeof ExtractTextFromFileInputSchema>;
+
+export const ExtractTextFromFileOutputSchema = z.object({
+    extractedText: z.string().describe('The raw extracted text content from the file.'),
+});
+export type ExtractTextFromFileOutput = z.infer<typeof ExtractTextFromFileOutputSchema>;
+
+export const SemanticSearchInputSchema = z.object({
+  query: z.string().describe("The user's natural language search query."),
+  contracts: z.array(z.object({
+    id: z.string(),
+    textContent: z.string(),
+  })).describe('A list of contracts to search through.'),
+});
+export type SemanticSearchInput = z.infer<typeof SemanticSearchInputSchema>;
+
+export const SemanticSearchOutputSchema = z.object({
+  matchingContractIds: z.array(z.string()).describe('An array of contract IDs that best match the search query.'),
+});
+export type SemanticSearchOutput = z.infer<typeof SemanticSearchOutputSchema>;

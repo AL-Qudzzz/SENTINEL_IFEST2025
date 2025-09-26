@@ -1,9 +1,13 @@
+
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import type { Contract, Status, WithId } from '@/lib/types';
+import { semanticSearch } from '@/ai/flows/semantic-search-flow';
+import { useToast } from './use-toast';
+
 
 interface ContractContextType {
     contracts: WithId<Contract>[];
@@ -11,22 +15,28 @@ interface ContractContextType {
     activeFilter: Status | 'All';
     handleFilterChange: (filter: Status | 'All') => void;
     isLoading: boolean;
+    isSearching: boolean;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
+    handleSemanticSearch: () => void;
 }
 
 const ContractContext = createContext<ContractContextType | undefined>(undefined);
 
 export const ContractProvider = ({ children }: { children: ReactNode }) => {
     const { firestore } = useFirebase();
+    const { toast } = useToast();
 
     const [contracts, setContracts] = useState<WithId<Contract>[]>([]);
     const [filteredContracts, setFilteredContracts] = useState<WithId<Contract>[]>([]);
     const [activeFilter, setActiveFilter] = useState<Status | 'All'>('All');
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [isSearching, setIsSearching] = useState(false);
+    
+    const [isSemanticSearch, setIsSemanticSearch] = useState(false);
+    const [semanticSearchResults, setSemanticSearchResults] = useState<string[]>([]);
 
-    // 1. Fetch data from Firestore on component mount and listen for real-time updates
     useEffect(() => {
         if (!firestore) return;
 
@@ -46,32 +56,68 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
             setIsLoading(false);
         });
 
-        return () => unsubscribe(); // Cleanup listener on unmount
+        return () => unsubscribe();
     }, [firestore]);
 
-    // 2. Perform filtering whenever 'activeFilter', 'searchTerm', or 'contracts' change
     useEffect(() => {
         let results = contracts;
 
-        // Filter by status
+        // If semantic search is active, first filter by its results
+        if (isSemanticSearch) {
+             results = results.filter(contract => semanticSearchResults.includes(contract.id));
+        }
+
+        // Then, filter by status
         if (activeFilter !== 'All') {
             results = results.filter(contract => contract.status === activeFilter);
         }
 
-        // Filter by search term
-        if (searchTerm) {
-            results = results.filter(contract => 
-                contract.title.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
         setFilteredContracts(results);
-    }, [activeFilter, searchTerm, contracts]);
+    }, [activeFilter, contracts, isSemanticSearch, semanticSearchResults]);
 
-    // 3. Function to change the filter, will be called by buttons
     const handleFilterChange = (filter: Status | 'All') => {
         setActiveFilter(filter);
+        // Reset semantic search when changing filters for a cleaner UX
+        if (isSemanticSearch) {
+            setIsSemanticSearch(false);
+            setSearchTerm('');
+            setSemanticSearchResults([]);
+        }
     };
+    
+    const handleSemanticSearch = useCallback(async () => {
+        if (!searchTerm.trim()) {
+            setIsSemanticSearch(false);
+            setSemanticSearchResults([]);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const contractsToSearch = contracts.map(c => ({ id: c.id, textContent: c.textContent }));
+            const result = await semanticSearch({ query: searchTerm, contracts: contractsToSearch });
+            
+            setSemanticSearchResults(result.matchingContractIds);
+            setIsSemanticSearch(true);
+
+            toast({
+                title: 'Search Complete',
+                description: `Found ${result.matchingContractIds.length} relevant contract(s).`,
+            });
+
+        } catch (error) {
+            console.error('Semantic search failed:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Search Failed',
+                description: 'The AI search could not be completed.',
+            });
+            setIsSemanticSearch(false);
+            setSemanticSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }, [searchTerm, contracts, toast]);
     
     const value = {
         contracts,
@@ -79,8 +125,10 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
         activeFilter,
         handleFilterChange,
         isLoading,
+        isSearching,
         searchTerm,
         setSearchTerm,
+        handleSemanticSearch,
     };
     
     return (

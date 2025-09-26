@@ -31,7 +31,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Trash2, Search } from 'lucide-react';
+import { Users, Trash2, Search, Loader2 } from 'lucide-react';
 import type { Contract, Status } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -64,12 +64,15 @@ function ContractsPageContent() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const { 
+    contracts,
     filteredContracts, 
     isLoading, 
+    isSearching,
     activeFilter, 
     handleFilterChange,
     searchTerm,
-    setSearchTerm
+    setSearchTerm,
+    handleSemanticSearch,
   } = useContract();
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -79,9 +82,7 @@ function ContractsPageContent() {
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
     try {
-      // Handles Firestore Timestamp, ISO string, or existing Date objects
       const jsDate = typeof date.toDate === 'function' ? date.toDate() : new Date(date);
-      // Check if the created date is valid
       if (isNaN(jsDate.getTime())) {
         return 'Invalid Date';
       }
@@ -123,6 +124,11 @@ function ContractsPageContent() {
       closeDeleteDialog();
     }
   };
+  
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSemanticSearch();
+  };
 
   return (
     <>
@@ -142,19 +148,25 @@ function ContractsPageContent() {
                <div className="flex-1">
                 <CardTitle>Contracts List</CardTitle>
                 <CardDescription>
-                  Browse and manage all contracts stored in the system.
+                  Browse and manage all contracts. Use natural language to search semantically.
                 </CardDescription>
               </div>
-               <div className="relative w-full sm:w-auto sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by title..."
-                  className="pl-9"
-                  aria-label="Search contracts"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <form onSubmit={handleSearchSubmit} className="flex w-full sm:w-auto sm:max-w-xs items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search semantically..."
+                    className="pl-9"
+                    aria-label="Search contracts"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" disabled={isSearching}>
+                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="sr-only sm:not-sr-only sm:ml-2">Search</span>
+                </Button>
+              </form>
             </CardHeader>
             <CardContent>
               <Tabs value={activeFilter} onValueChange={(value) => handleFilterChange(value as Status | 'All')}>
@@ -224,7 +236,7 @@ function ContractsPageContent() {
                   {!isLoading && filteredContracts.length === 0 && (
                      <TableRow>
                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                         No contracts found.
+                         {isSearching ? 'AI is searching...' : 'No contracts found matching your criteria.'}
                        </TableCell>
                      </TableRow>
                   )}
