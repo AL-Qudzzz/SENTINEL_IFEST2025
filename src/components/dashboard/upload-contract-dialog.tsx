@@ -16,6 +16,7 @@ import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, User
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/extract-contract-data-flow';
 import { Separator } from '../ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -129,30 +130,32 @@ export function UploadContractDialog() {
           )}
 
           {result && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Extracted Information</h3>
-              <div className="grid gap-4 rounded-lg border p-4">
-                <InfoItem icon={FileText} label="Contract Type" value={result.metadata.contractType || 'N/A'} />
-                <InfoItem icon={Users} label="Parties Involved" value={result.metadata.partiesInvolved || 'N/A'} />
-                <InfoItem icon={CircleDollarSign} label="Contract Value" value={result.metadata.contractValue || 'N/A'} />
-                <Separator />
-                <h4 className="font-semibold text-md">Important Dates</h4>
-                {result.importantDates.length > 0 ? (
-                  result.importantDates.map(d => <InfoItem key={d.dateType} icon={Calendar} label={d.dateType} value={d.date} />)
-                ) : (
-                  <p className='text-sm text-muted-foreground'>No dates found.</p>
-                )}
-                 <Separator />
-                <h4 className="font-semibold text-md">Obligations</h4>
-                 {result.obligations.length > 0 ? (
-                   <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                      {result.obligations.map((o,i) => <li key={i}>{o}</li>)}
-                   </ul>
-                ) : (
-                  <p className='text-sm text-muted-foreground'>No obligations found.</p>
-                )}
+            <ScrollArea className="max-h-[40vh] pr-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Extracted Information</h3>
+                <div className="grid gap-4 rounded-lg border p-4">
+                  <InfoItem icon={FileText} label="Contract Type" value={result.metadata.contractType || 'N/A'} />
+                  <InfoItem icon={Users} label="Parties Involved" value={result.metadata.partiesInvolved || 'N/A'} />
+                  <InfoItem icon={CircleDollarSign} label="Contract Value" value={result.metadata.contractValue || 'N/A'} />
+                  <Separator />
+                  <h4 className="font-semibold text-md">Important Dates</h4>
+                  {result.importantDates.length > 0 ? (
+                    result.importantDates.map(d => <InfoItem key={d.dateType} icon={Calendar} label={d.dateType} value={d.date} />)
+                  ) : (
+                    <p className='text-sm text-muted-foreground'>No dates found.</p>
+                  )}
+                  <Separator />
+                  <h4 className="font-semibold text-md">Obligations</h4>
+                  {result.obligations.length > 0 ? (
+                    <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                        {result.obligations.map((o,i) => <li key={i}>{o}</li>)}
+                    </ul>
+                  ) : (
+                    <p className='text-sm text-muted-foreground'>No obligations found.</p>
+                  )}
+                </div>
               </div>
-            </div>
+            </ScrollArea>
           )}
 
           {isLoading && (
