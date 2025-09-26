@@ -12,7 +12,6 @@ import {
   Settings,
   ShieldAlert,
   Users,
-  Bell,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -46,7 +45,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '../ui/skeleton';
-import { NotificationBell } from './NotificationBell';
 
 const navItems = [
   {
@@ -104,12 +102,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         className="border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
         <div className="flex h-full flex-col">
-          <SidebarHeader className="h-16 items-center flex justify-between">
+          <SidebarHeader className="h-16 items-center flex justify-center">
             <div
               data-sidebar="header-content"
               className="flex items-center justify-center gap-2 overflow-hidden w-full"
             >
-              <span className="font-headline text-lg font-bold">SENTINEL</span>
+              <span className="font-headline text-lg font-bold opacity-0 group-hover/sidebar:opacity-100 transition-opacity">SENTINEL</span>
             </div>
             <SidebarTrigger className='md:hidden absolute right-2 top-4' />
           </SidebarHeader>
