@@ -64,11 +64,6 @@ const navItems = [
     icon: ShieldAlert,
   },
   {
-    href: '/collaboration',
-    label: 'Collaboration',
-    icon: Users,
-  },
-  {
     href: '/qa',
     label: 'Q&A',
     icon: MessageCircleQuestion,
@@ -110,7 +105,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <SidebarMenuItem key={item.label}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true)}
                     tooltip={item.label}
                   >
                     <a href={item.href}>
