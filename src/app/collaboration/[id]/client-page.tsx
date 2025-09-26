@@ -44,16 +44,10 @@ import { doc, collection, query, orderBy, serverTimestamp, writeBatch } from 'fi
 import type { Contract, ContractComment, ApprovalStep, ApprovalStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
-
-const activityLog = [
-    { user: 'Jane Doe', action: 'Approved Legal Review', time: '1 hour ago' },
-    { user: 'Alex Ray', action: 'Edited Clause 5.1', time: '3 hours ago' },
-    { user: 'System', action: 'Contract draft created from template "MSA-v2"', time: 'Yesterday' },
-];
 
 const collaborators = [
     { name: 'You', email: 'jane.doe@acme.com', role: 'Owner', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib,rb-4.1.0&q=80&w=1080', initials: 'JD' },
@@ -212,6 +206,47 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     );
     const { data: approvalSteps, isLoading: isLoadingApprovals } = useCollection<ApprovalStep>(approvalsQuery);
 
+    const activityLog = useMemo(() => {
+        const combinedLog: {id: string, user: string, action: string, time: Date}[] = [];
+
+        if (comments) {
+            comments.forEach(comment => {
+                combinedLog.push({
+                    id: `comment-${comment.id}`,
+                    user: comment.authorName,
+                    action: `commented: "${comment.commentText}"`,
+                    time: comment.createdAt.toDate(),
+                });
+            });
+        }
+
+        if (approvalSteps) {
+            approvalSteps.forEach(step => {
+                if (step.status === 'Approved' && step.approvedAt) {
+                    combinedLog.push({
+                        id: `approval-${step.id}`,
+                        user: step.approverName,
+                        action: `Approved ${step.stepName}`,
+                        time: step.approvedAt.toDate(),
+                    });
+                }
+            });
+        }
+        
+        // Also add the contract creation event
+        if (contract.createdAt) {
+             combinedLog.push({
+                id: `creation-${contract.id}`,
+                user: 'System',
+                action: 'Contract draft created',
+                time: (contract.createdAt as any).toDate(),
+             });
+        }
+
+
+        return combinedLog.sort((a, b) => b.time.getTime() - a.time.getTime());
+    }, [comments, approvalSteps, contract]);
+
 
     // Seed workflow steps if they don't exist for this contract
     useEffect(() => {
@@ -296,7 +331,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const formatTimestamp = (timestamp: any) => {
         if (!timestamp) return 'just now';
         try {
-            const date = timestamp.toDate();
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             return formatDistanceToNow(date, { addSuffix: true });
         } catch (e) {
             return 'just now';
@@ -405,16 +440,31 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                           <Button type="submit" size="icon" disabled={!newComment.trim() || !user}><Send/></Button>
                       </form>
                     </TabsContent>
-                    <TabsContent value="activity" className="space-y-4">
-                       {activityLog.map((log, index) => (
-                            <div key={index} className="flex items-center gap-3">
-                                <FileClock className="h-4 w-4 text-muted-foreground" />
+                    <TabsContent value="activity" className="space-y-4 overflow-y-auto">
+                       {(isLoadingComments || isLoadingApprovals) && Array.from({ length: 4 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-3">
+                            <Skeleton className="h-4 w-4 rounded-full" />
+                            <div className="flex-1 space-y-1">
+                              <Skeleton className="h-4 w-3/4" />
+                              <Skeleton className="h-3 w-1/4" />
+                            </div>
+                          </div>
+                       ))}
+                       {!(isLoadingComments || isLoadingApprovals) && activityLog.map((log) => (
+                            <div key={log.id} className="flex items-center gap-3">
+                                <FileClock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                                 <div>
-                                    <p className="text-sm"><span className="font-medium">{log.user}</span> {log.action}</p>
-                                    <p className="text-xs text-muted-foreground">{log.time}</p>
+                                    <p className="text-sm">
+                                      <span className="font-medium">{log.user}</span>
+                                      <span className="text-muted-foreground"> {log.action.length > 40 ? `${log.action.substring(0, 40)}...` : log.action}</span>
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">{formatTimestamp(log.time)}</p>
                                 </div>
                             </div>
                        ))}
+                       {!(isLoadingComments || isLoadingApprovals) && activityLog.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-8">No activity to show.</p>
+                       )}
                     </TabsContent>
                 </CardContent>
              </Tabs>
@@ -505,3 +555,5 @@ export default function CollaborationClientPage({ id }: { id: string }) {
         </div>
     );
 }
+
+    
