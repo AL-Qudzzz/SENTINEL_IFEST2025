@@ -151,7 +151,6 @@ export default function ContractsPage() {
                     <TabsTrigger key={status} value={status}>{status}</TabsTrigger>
                   ))}
                 </TabsList>
-                
                 <TabsContent value={filter} className="mt-0">
                   <Table>
                     <TableHeader>
@@ -257,4 +256,3 @@ export default function ContractsPage() {
     </>
   );
 }
-
