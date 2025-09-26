@@ -418,6 +418,8 @@ function CollaborationClientPage({ id }: { id: string }) {
     );
 }
 
-export default function CollaborationPage({ params: { id } }: { params: { id: string } }) {
-  return <CollaborationClientPage id={id} />;
+export default function CollaborationPage({ params }: { params: { id: string } }) {
+  return <CollaborationClientPage id={params.id} />;
 }
+
+    
