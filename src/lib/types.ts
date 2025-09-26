@@ -48,3 +48,16 @@ export interface ApprovalStep {
     initials: string;
     approvedAt?: Timestamp | null;
 }
+
+export interface User {
+    id: string; // Corresponds to Firebase Auth UID
+    uid: string;
+    displayName: string;
+    username: string;
+    email: string;
+    telephone: string;
+    role: 'Hukum' | 'Internal' | 'Manajemen';
+    createdAt: Timestamp | Date;
+    updatedAt?: Timestamp | Date;
+    departmentId?: string; // Optional department reference
+}

@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Contract": {
@@ -234,22 +235,41 @@
       "type": "object",
       "description": "Represents a user of the Sentinel application.",
       "properties": {
-        "id": {
+        "uid": {
           "type": "string",
-          "description": "Unique identifier for the User entity."
+          "description": "Unique identifier for the User entity, matches Firebase Auth UID."
         },
-        "firstName": {
+        "displayName": {
           "type": "string",
-          "description": "The first name of the user."
+          "description": "The display name of the user."
         },
-        "lastName": {
+        "username": {
           "type": "string",
-          "description": "The last name of the user."
+          "description": "The unique username for the user."
         },
         "email": {
           "type": "string",
           "description": "The email address of the user.",
           "format": "email"
+        },
+        "telephone": {
+          "type": "string",
+          "description": "The user's telephone number."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the system.",
+          "enum": ["Hukum", "Internal", "Manajemen"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the user account was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last profile update."
         },
         "departmentId": {
           "type": "string",
@@ -257,11 +277,13 @@
         }
       },
       "required": [
-        "id",
-        "firstName",
-        "lastName",
+        "uid",
+        "displayName",
+        "username",
         "email",
-        "departmentId"
+        "telephone",
+        "role",
+        "createdAt"
       ]
     },
     "ContractVersion": {

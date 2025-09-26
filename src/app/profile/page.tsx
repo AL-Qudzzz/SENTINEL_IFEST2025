@@ -1,13 +1,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
 import { updateProfile, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
-import { Loader2, User, Bell, Shield, Trash2, Save } from 'lucide-react';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,19 +21,26 @@ import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import type { User as AppUser } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const profileFormSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
+  displayName: z.string().min(1, 'Display name is required'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  telephone: z.string().min(10, 'Please enter a valid phone number'),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
-  const auth = useAuth();
+  const { auth, firestore } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
+
+  const userDocRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
+  const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
   
@@ -41,23 +49,42 @@ export default function ProfilePage() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      firstName: user?.displayName?.split(' ')[0] || '',
-      lastName: user?.displayName?.split(' ').slice(1).join(' ') || '',
+      displayName: '',
+      username: '',
+      telephone: '',
     },
-    values: { // Ensures form is repopulated when user data loads
-        firstName: user?.displayName?.split(' ')[0] || '',
-        lastName: user?.displayName?.split(' ').slice(1).join(' ') || '',
-    }
   });
 
+  useEffect(() => {
+    if (appUser) {
+      form.reset({
+        displayName: appUser.displayName || '',
+        username: appUser.username || '',
+        telephone: appUser.telephone || '',
+      });
+    }
+  }, [appUser, form]);
+
+
   const onSubmit = async (data: ProfileFormValues) => {
-    if (!user) return;
+    if (!user || !firestore || !appUser) return;
     setIsSubmitting(true);
     try {
-      await updateProfile(user, { displayName: `${data.firstName} ${data.lastName}` });
+      // Update Auth profile (optional, but good for consistency)
+      await updateProfile(user, { displayName: data.displayName });
+      
+      // Update Firestore document
+      const userRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userRef, {
+        displayName: data.displayName,
+        username: data.username,
+        telephone: data.telephone,
+        updatedAt: serverTimestamp(),
+      });
+
       toast({
         title: 'Profile Updated',
-        description: 'Your name has been updated successfully.',
+        description: 'Your profile has been updated successfully.',
       });
     } catch (error) {
       console.error(error);
@@ -92,6 +119,10 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!user) return;
     try {
+        // Optionally, delete Firestore document first
+        if (firestore) {
+            await deleteDoc(doc(firestore, 'users', user.uid));
+        }
         await deleteUser(user);
         toast({
             title: 'Account Deleted',
@@ -109,7 +140,7 @@ export default function ProfilePage() {
   }
 
 
-  if (isUserLoading) {
+  if (isUserLoading || isAppUserLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -140,40 +171,59 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-6">
                                 <Avatar className="h-20 w-20">
                                     {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
-                                    <AvatarFallback>{user?.displayName?.split(' ').map(n => n[0]).join('') || 'U'}</AvatarFallback>
+                                    <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                                 </Avatar>
                                 <div className='flex-1 space-y-2'>
                                     <Label>Email</Label>
                                     <Input value={user?.email || 'No email associated'} disabled />
                                 </div>
                             </div>
+                             <div className="grid sm:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="displayName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <Label>Display Name</Label>
+                                            <FormControl>
+                                                <Input placeholder="Jane Doe" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                 <FormField
+                                    control={form.control}
+                                    name="username"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <Label>Username</Label>
+                                            <FormControl>
+                                                <Input placeholder="janedoe" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
                             <div className="grid sm:grid-cols-2 gap-4">
-                                <FormField
+                               <FormField
                                     control={form.control}
-                                    name="firstName"
+                                    name="telephone"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <Label>First Name</Label>
+                                            <Label className="flex items-center gap-2"><Phone size={14}/> Telephone</Label>
                                             <FormControl>
-                                                <Input placeholder="Jane" {...field} />
+                                                <Input type="tel" placeholder="08123456789" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="lastName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <Label>Last Name</Label>
-                                            <FormControl>
-                                                <Input placeholder="Doe" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                <div>
+                                    <Label className="flex items-center gap-2"><Briefcase size={14}/> Role</Label>
+                                    <Input value={appUser?.role || 'N/A'} disabled />
+                                </div>
                             </div>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
