@@ -4,7 +4,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft } from "lucide-react"
+import { PanelLeft, Pin, PinOff } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -73,12 +73,9 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen)
     const open = openProp ?? _open
     
-    // Pinned state
     const [isPinned, setIsPinned] = React.useState(defaultOpen);
 
 
@@ -90,27 +87,18 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState)
         }
-
-        // This sets the cookie to keep the sidebar state.
-        if (isPinned) {
-            document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
-        }
       },
-      [setOpenProp, open, isPinned]
+      [setOpenProp, open]
     )
     
     const togglePin = () => {
         const newPinnedState = !isPinned;
         setIsPinned(newPinnedState);
-        // Persist pinned state
-         document.cookie = `${SIDEBAR_COOKIE_NAME}=${newPinnedState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-         if (newPinnedState) {
-            setOpen(true);
-         }
+        setOpen(newPinnedState);
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${newPinnedState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     };
 
 
-    // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
       if (isMobile) {
         setOpenMobile((open) => !open);
@@ -119,7 +107,6 @@ const SidebarProvider = React.forwardRef<
       }
     }, [isMobile, togglePin, setOpenMobile])
 
-    // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
@@ -145,8 +132,6 @@ const SidebarProvider = React.forwardRef<
     }, []);
 
 
-    // We add a state so that we can do data-state="expanded" or "collapsed".
-    // This makes it easier to style the sidebar with Tailwind classes.
     const state = open ? "expanded" : "collapsed"
 
     const contextValue = React.useMemo<SidebarContext>(
@@ -313,7 +298,7 @@ const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, isPinned, open } = useSidebar()
 
   return (
     <Button
@@ -328,7 +313,7 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <PanelLeft />
+      {isPinned ? <PinOff/> : <Pin />}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )
@@ -811,3 +796,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
