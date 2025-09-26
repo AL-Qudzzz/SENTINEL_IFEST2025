@@ -83,6 +83,13 @@ function DashboardStats() {
 
 
 export default function Home() {
+  const { firestore } = useFirebase();
+  const contractsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: contracts, isLoading: isLoadingContracts } = useCollection<Contract>(contractsQuery);
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -108,7 +115,7 @@ export default function Home() {
 
         <div className="grid gap-6 lg:col-span-2">
           <UpcomingDeadlines />
-          <RiskOverviewChart />
+          <RiskOverviewChart contracts={contracts} isLoading={isLoadingContracts} />
         </div>
       </main>
     </div>
