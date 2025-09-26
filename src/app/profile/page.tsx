@@ -67,7 +67,7 @@ export default function ProfilePage() {
       });
       setLocalPhotoURL(appUser.photoURL);
     }
-  }, [appUser, form, isEditing]);
+  }, [appUser, isEditing, form]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -179,12 +179,11 @@ export default function ProfilePage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!user) return;
+    if (!user || !firestore) return;
     try {
         // Optionally, delete Firestore document first
-        if (firestore) {
-            await deleteFirestoreDoc(doc(firestore, 'users', user.uid));
-        }
+        await deleteFirestoreDoc(doc(firestore, 'users', user.uid));
+        
         await deleteUser(user);
         toast({
             title: 'Account Deleted',
@@ -313,24 +312,24 @@ export default function ProfilePage() {
                             
                             <div className="flex gap-2">
                                 {isEditing ? (
-                                    <Button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2"/>}
-                                        Save Changes
-                                    </Button>
+                                    <>
+                                        <Button type="submit" disabled={isSubmitting}>
+                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2"/>}
+                                            Save Changes
+                                        </Button>
+                                        <Button variant="ghost" type="button" onClick={() => {
+                                             setIsEditing(false);
+                                             setPhotoFile(null); // Reset file selection
+                                             // form.reset() is called by useEffect
+                                         }}>
+                                             Cancel
+                                         </Button>
+                                     </>
                                 ) : (
                                     <Button type="button" onClick={() => setIsEditing(true)}>
                                         <Edit className="mr-2"/>
                                         Edit Profile
                                     </Button>
-                                )}
-                                {isEditing && (
-                                     <Button variant="ghost" type="button" onClick={() => {
-                                         setIsEditing(false);
-                                         setPhotoFile(null); // Reset file selection
-                                         // form.reset() is called by useEffect, which is better
-                                     }}>
-                                         Cancel
-                                     </Button>
                                 )}
                            </div>
                         </form>
