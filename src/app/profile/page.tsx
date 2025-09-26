@@ -72,7 +72,7 @@ export default function ProfilePage() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user || !storage) return;
-    handleUpload(file);
+    await handleUpload(file);
   };
 
   const handleUpload = async (file: File) => {
@@ -360,6 +360,8 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
 
