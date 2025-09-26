@@ -155,41 +155,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     </div>
                 </div>
              </Link>
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-10 w-full justify-center group-hover/sidebar:justify-start gap-2 px-2"
-                    aria-label="View Profile"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <div className="flex flex-col items-start overflow-hidden opacity-0 w-0 group-hover/sidebar:w-full group-hover/sidebar:opacity-100 transition-all">
-                       <span className="font-medium text-sm whitespace-nowrap">Settings</span>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="start" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <CircleUser className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                   <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
           </SidebarFooter>
         </div>
       </Sidebar>
@@ -203,4 +168,3 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
