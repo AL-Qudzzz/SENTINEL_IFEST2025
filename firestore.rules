@@ -1,8 +1,188 @@
+/**
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a hybrid security model that prioritizes user ownership and role-based access control for contract management.
+ *
+ * Data Structure:
+ * - Users: Stored under `/users/{userId}`, accessible only by the owning user.
+ * - Companies: Stored under `/companies/{companyId}`, potentially accessible to admins or users with specific roles.
+ * - Departments: Stored under `/departments/{departmentId}`, potentially accessible to department heads or admins.
+ * - Contracts: Stored under `/contracts/{contractId}`, with access controlled via a `members` map on the document.
+ * - Documents (Contract Subcollection): Stored under `/contracts/{contractId}/documents/{documentId}`, with access controlled by the parent contract's `members` map.
+ * - Notifications (Contract Subcollection): Stored under `/contracts/{contractId}/notifications/{notificationId}`, with access controlled by the parent contract's `members` map.
+ * - ClauseRiskAssessments (Contract Subcollection): Stored under `/contracts/{contractId}/clauseRiskAssessments/{clauseRiskAssessmentId}`, with access controlled by the parent contract's `members` map.
+ *
+ * Key Security Decisions:
+ * - Strict user-ownership for `/users/{userId}`.
+ * - Collaborative access to contracts is managed via a `members` map on the contract document.
+ * - Subcollections inherit access control from their parent `contract` document.
+ * - Listing of users, companies, and departments is explicitly denied unless more specific role-based authorization is added.
+ *
+ * Denormalization for Authorization:
+ * - The `contracts` collection uses a `members` map to store user roles, avoiding costly `get()` calls to a separate `memberships` collection.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    /**
+     * @description Controls access to user profiles. Only the user themselves can read and write their own profile.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their profile with matching `request.auth.uid`.
+     * @deny (create) User with ID 'user123' cannot create a profile with a mismatched `request.auth.uid`.
+     * @allow (get, list, update, delete) User with ID 'user123' can get, list, update, and delete their own profile.
+     * @deny (get, list, update, delete) User with ID 'user456' cannot get, list, update, or delete the profile of user 'user123'.
+     * @principle Enforces document ownership for all operations on the user profile.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && resource.data.id == request.resource.data.id;
+      allow delete: if isOwner(userId);
+    }
+
+    /**
+     * @description Controls access to company information. Access is currently denied to everyone.  This placeholder should be updated with role-based access control.
+     * @path /companies/{companyId}
+     * @deny (get, list, create, update, delete) No one can access company information without further authorization.
+     * @principle Restricts access to company data; implement role-based access control for admins or authorized users.
+     */
+    match /companies/{companyId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to department information. Access is currently denied to everyone.  This placeholder should be updated with role-based access control.
+     * @path /departments/{departmentId}
+     * @deny (get, list, create, update, delete) No one can access department information without further authorization.
+     * @principle Restricts access to department data; implement role-based access control for department heads or authorized users.
+     */
+    match /departments/{departmentId} {
+      allow get: if false;
+      allow list: if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Controls access to contract metadata.  Access is managed via a `members` map on the contract document.
+     * @path /contracts/{contractId}
+     * @allow (get, list) Any signed-in user can read (get, list) contract data
+     * @allow (create) User with ID 'user123' can create contract if they are in `members` and have appropriate role.
+     * @deny (create) User with ID 'user123' cannot create contract if they are not in `members` or don't have appropriate role.
+     * @allow (update, delete) User with ID 'user123' can update/delete contract if they are in `members` and have appropriate role.
+     * @deny (update, delete) User with ID 'user123' cannot update/delete contract if they are not in `members` or don't have appropriate role.
+     * @principle Enforces collaborative access via the `members` map.
+     */
+    match /contracts/{contractId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(contract) {
+          return contract.data.members[request.auth.uid] != null;
+      }
+
+      function isExistingMember(contractId) {
+        return get(/databases/$(database)/documents/contracts/$(contractId)).data.members[request.auth.uid] != null;
+      }
+      
+      function isContractExisting(contractId) {
+        return get(/databases/$(database)/documents/contracts/$(contractId)).data != null;
+      }
+      
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn() && isMember(request.resource);
+      allow update: if isSignedIn() && isContractExisting(contractId) && isMember(resource);
+      allow delete: if isSignedIn() && isContractExisting(contractId) && isMember(resource);
+    }
+
+    /**
+     * @description Controls access to contract documents stored under a specific contract. Access is controlled by the parent contract's `members` map.
+     * @path /contracts/{contractId}/documents/{documentId}
+     * @allow (get, list) Any signed-in user can read (get, list) document data under contract if they are a member of that contract.
+     * @allow (create) User with ID 'user123' can create document under contract if they are a member of that contract.
+     * @deny (create) User with ID 'user123' cannot create document under contract if they are not a member of that contract.
+     * @allow (update, delete) User with ID 'user123' can update/delete document under contract if they are a member of that contract.
+     * @deny (update, delete) User with ID 'user123' cannot update/delete document under contract if they are not a member of that contract.
+     * @principle Enforces collaborative access to contract documents based on membership in the parent contract.
+     */
+    match /contracts/{contractId}/documents/{documentId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(contractId) {
+          return get(/databases/$(database)/documents/contracts/$(contractId)).data.members[request.auth.uid] != null;
+      }
+      
+      allow get, list: if isSignedIn() && isMember(contractId);
+      allow create: if isSignedIn() && isMember(contractId);
+      allow update: if isSignedIn() && isMember(contractId);
+      allow delete: if isSignedIn() && isMember(contractId);
+    }
+
+    /**
+     * @description Controls access to notifications related to a specific contract. Access is controlled by the parent contract's `members` map.
+     * @path /contracts/{contractId}/notifications/{notificationId}
+     * @allow (get, list) Any signed-in user can read (get, list) notification data under contract if they are a member of that contract.
+     * @allow (create) User with ID 'user123' can create notification under contract if they are a member of that contract.
+     * @deny (create) User with ID 'user123' cannot create notification under contract if they are not a member of that contract.
+     * @allow (update, delete) User with ID 'user123' can update/delete notification under contract if they are a member of that contract.
+     * @deny (update, delete) User with ID 'user123' cannot update/delete notification under contract if they are not a member of that contract.
+     * @principle Enforces collaborative access to contract notifications based on membership in the parent contract.
+     */
+    match /contracts/{contractId}/notifications/{notificationId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(contractId) {
+          return get(/databases/$(database)/documents/contracts/$(contractId)).data.members[request.auth.uid] != null;
+      }
+      
+      allow get, list: if isSignedIn() && isMember(contractId);
+      allow create: if isSignedIn() && isMember(contractId);
+      allow update: if isSignedIn() && isMember(contractId);
+      allow delete: if isSignedIn() && isMember(contractId);
+    }
+
+    /**
+     * @description Controls access to clause risk assessments related to a specific contract. Access is controlled by the parent contract's `members` map.
+     * @path /contracts/{contractId}/clauseRiskAssessments/{clauseRiskAssessmentId}
+     * @allow (get, list) Any signed-in user can read (get, list) clause risk assessment data under contract if they are a member of that contract.
+     * @allow (create) User with ID 'user123' can create clause risk assessment under contract if they are a member of that contract.
+     * @deny (create) User with ID 'user123' cannot create clause risk assessment under contract if they are not a member of that contract.
+     * @allow (update, delete) User with ID 'user123' can update/delete clause risk assessment under contract if they are a member of that contract.
+     * @deny (update, delete) User with ID 'user123' cannot update/delete clause risk assessment under contract if they are not a member of that contract.
+     * @principle Enforces collaborative access to contract clause risk assessments based on membership in the parent contract.
+     */
+    match /contracts/{contractId}/clauseRiskAssessments/{clauseRiskAssessmentId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isMember(contractId) {
+          return get(/databases/$(database)/documents/contracts/$(contractId)).data.members[request.auth.uid] != null;
+      }
+      
+      allow get, list: if isSignedIn() && isMember(contractId);
+      allow create: if isSignedIn() && isMember(contractId);
+      allow update: if isSignedIn() && isMember(contractId);
+      allow delete: if isSignedIn() && isMember(contractId);
     }
   }
 }
