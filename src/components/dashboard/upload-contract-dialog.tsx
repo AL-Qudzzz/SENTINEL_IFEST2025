@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [contractText, setContractText] = useState('');
+  const [fileType, setFileType] = useState('');
   const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,12 +40,14 @@ export function UploadContractDialog() {
     setIsLoading(false);
     setError(null);
     setResult(null);
+    setFileType('');
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setFileName(file.name);
+      setFileType(file.type);
       setResult(null);
       setError(null);
       const reader = new FileReader();
@@ -100,10 +103,12 @@ export function UploadContractDialog() {
     const newContract: Omit<Contract, 'id'> = {
       title: fileName || 'Untitled Contract',
       partner: result.metadata.partiesInvolved || 'N/A',
-      status: 'Drafting',
+      status: 'In Review',
       effectiveDate: effectiveDate ? new Date(effectiveDate).toISOString() : new Date().toISOString(),
       expirationDate: expirationDate ? new Date(expirationDate).toISOString() : new Date().toISOString(),
       contractValue: result.metadata.contractValue || 'N/A',
+      textContent: contractText,
+      fileType: fileType || 'text/plain',
       createdAt: serverTimestamp(),
     };
 
@@ -182,7 +187,7 @@ export function UploadContractDialog() {
                 <div className="grid gap-4 rounded-lg border p-4">
                   <InfoItem icon={FileText} label="Contract Type" value={result.metadata.contractType || 'N/A'} />
                   <InfoItem icon={Users} label="Parties Involved" value={result.metadata.partiesInvolved || 'N/A'} />
-                  <InfoItem icon={CircleDollarSign} label="Contract Value" value={result.metadata.contractValue || 'N/A'} />
+                  <InfoItem icon={CircleDollarSign} label="Contract Value" value={result.metadata.contractValue || 'NA'} />
                   <Separator />
                   <h4 className="font-semibold text-md">Important Dates</h4>
                   {result.importantDates.length > 0 ? (

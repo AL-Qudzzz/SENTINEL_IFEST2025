@@ -10,5 +10,7 @@ export interface Contract {
     effectiveDate: string;
     expirationDate: string;
     contractValue: string;
+    textContent: string;
+    fileType: string;
     createdAt: Timestamp | Date;
 }
