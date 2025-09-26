@@ -4,9 +4,7 @@ import {
   Gavel,
   Bell,
   Search,
-  PlusCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -19,6 +17,7 @@ import { StatsCard } from '@/components/dashboard/stats-card';
 import { RecentActivityTable } from '@/components/dashboard/recent-activity-table';
 import { UpcomingDeadlines } from '@/components/dashboard/upcoming-deadlines';
 import { RiskOverviewChart } from '@/components/dashboard/risk-overview-chart';
+import { UploadContractDialog } from '@/components/dashboard/upload-contract-dialog';
 
 export default function Home() {
   return (
@@ -41,10 +40,7 @@ export default function Home() {
               aria-label="Search contracts"
             />
           </div>
-          <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <PlusCircle />
-            New Contract
-          </Button>
+          <UploadContractDialog />
         </div>
       </header>
 
