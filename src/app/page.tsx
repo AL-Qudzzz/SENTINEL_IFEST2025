@@ -12,6 +12,8 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NotificationBell } from '@/components/layout/NotificationBell';
+import { Button } from '@/components/ui/button';
 
 function DashboardStats() {
   const { firestore } = useFirebase();
@@ -102,6 +104,12 @@ export default function Home() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <NotificationBell>
+            <Button variant="outline" size="icon" className="relative h-10 w-10 shrink-0">
+                <Bell />
+                <span className="sr-only">Toggle notifications</span>
+            </Button>
+          </NotificationBell>
           <UploadContractDialog />
         </div>
       </header>

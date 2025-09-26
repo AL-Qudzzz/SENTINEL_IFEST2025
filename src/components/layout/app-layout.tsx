@@ -44,7 +44,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { NotificationBell } from './NotificationBell';
 import Link from 'next/link';
 import { Skeleton } from '../ui/skeleton';
 
@@ -134,12 +133,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="p-2 flex flex-row items-center justify-between">
-            <NotificationBell>
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 shrink-0">
-                  <Bell />
-                  <span className="sr-only">Toggle notifications</span>
-              </Button>
-            </NotificationBell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
