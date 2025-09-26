@@ -18,8 +18,9 @@ import { differenceInDays, addYears } from 'date-fns';
 import { Badge } from '../ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
+import { ReactNode } from 'react';
 
-export function NotificationBell() {
+export function NotificationBell({ children }: { children: ReactNode }) {
     const { firestore } = useFirebase();
     const { toast } = useToast();
 
@@ -66,21 +67,16 @@ export function NotificationBell() {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative h-10 w-10 shrink-0 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10"
-                >
-                    <Bell className="h-5 w-5" />
-                     {expiringContracts && expiringContracts.length > 0 && (
-                        <span className="absolute top-2 right-2 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                        </span>
-                     )}
-                    <span className="sr-only">Toggle notifications</span>
-                </Button>
+            <DropdownMenuTrigger asChild className="relative">
+                <>
+                {children}
+                {expiringContracts && expiringContracts.length > 0 && (
+                    <span className="absolute top-2 right-2 flex h-3 w-3 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    </span>
+                 )}
+                </>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-80">
                 <DropdownMenuLabel>Expiring Soon (10 days)</DropdownMenuLabel>

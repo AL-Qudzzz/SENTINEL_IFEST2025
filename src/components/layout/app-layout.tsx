@@ -6,13 +6,13 @@ import Image from 'next/image';
 import {
   CircleUser,
   FileText,
-  Gavel,
   LayoutDashboard,
   LogOut,
   MessageCircleQuestion,
   Settings,
   ShieldAlert,
   Users,
+  Bell,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -120,8 +120,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="p-2 flex flex-col gap-2 items-center group-data-[collapsible=icon]:flex-col">
-            <NotificationBell />
+          <SidebarFooter className="p-2 flex flex-col gap-2">
+            <NotificationBell>
+                 <SidebarMenuButton tooltip="Notifications" className="w-full justify-start group-data-[collapsible=icon]:justify-center">
+                    <Bell />
+                    <span>Notification</span>
+                 </SidebarMenuButton>
+            </NotificationBell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
