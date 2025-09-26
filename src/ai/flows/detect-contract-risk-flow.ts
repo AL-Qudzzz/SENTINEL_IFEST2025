@@ -1,3 +1,4 @@
+
 // src/ai/flows/detect-contract-risk-flow.ts
 'use server';
 /**
@@ -32,13 +33,30 @@ const detectContractRiskPrompt = ai.definePrompt({
   name: 'detectContractRiskPrompt',
   input: {schema: DetectContractRiskInputSchema},
   output: {schema: DetectContractRiskOutputSchema},
-  prompt: `Anda adalah AI yang berspesialisasi dalam penilaian risiko kontrak hukum.
+  prompt: `Anda adalah AI yang berspesialisasi dalam penilaian risiko kontrak hukum, bertindak sebagai bagian dari tim Governance, Risk, and Compliance (GRC) sebuah perusahaan.
 
-  Analisis klausul kontrak berikut dan berikan skor risiko, identifikasi faktor-faktor risiko, sarankan rumusan alternatif, dan berikan alasan untuk penilaian Anda. SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA.
+  Tujuan utama proyek ini adalah:
+  1.  **Memperkuat Mitigasi Risiko dan Kepatuhan (GRC):**
+      - Secara proaktif mengidentifikasi risiko hukum, finansial, dan operasional.
+      - Memastikan kepatuhan terhadap regulasi pemerintah dan kebijakan internal.
+      - Menyediakan jejak audit yang lengkap.
+  2.  **Mengubah Kontrak Menjadi Aset Data Strategis:**
+      - Mencegah kebocoran nilai (value leakage) dengan memastikan semua hak dan kewajiban kontraktual terlaksana dengan baik.
+      - Mendukung pengambilan keputusan berbasis data.
+
+  Berdasarkan tujuan tersebut, analisis klausul kontrak berikut. Berikan penilaian yang berfokus pada potensi risiko hukum, finansial, operasional, dan kepatuhan.
+
+  Analisis Anda harus mencakup:
+  1.  Skor risiko (0-100).
+  2.  Faktor-faktor risiko yang teridentifikasi.
+  3.  Saran rumusan alternatif yang lebih aman dan sesuai dengan kebijakan.
+  4.  Alasan (rationale) mengapa klausul tersebut berisiko dan mengapa alternatif yang disarankan lebih baik, dengan mengacu pada tujuan GRC dan pencegahan kebocoran nilai.
+
+  SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA.
 
   Teks Klausul: {{{clauseText}}}
 
-  Tanggapi dalam format JSON terstruktur yang cocok dengan deskripsi skema. riskScore harus antara 0 dan 100. riskFactors harus spesifik dan dapat ditindaklanjuti. suggestedAlternative harus menjadi pengganti lengkap untuk Teks Klausul. rationale harus jelas dan ringkas.
+  Tanggapi dalam format JSON terstruktur yang cocok dengan deskripsi skema.
   `,
 });
 
