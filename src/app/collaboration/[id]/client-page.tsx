@@ -482,7 +482,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
               <div>
                 <CardTitle>{contract.title}</CardTitle>
                 <CardDescription>
-                  Status: <Badge variant={contract.status === 'Active' ? 'default' : 'secondary'} className="font-semibold">{contract.status}</Badge>. Version 2.1.
+                  Status: <Badge variant={contract.status === 'Active' ? 'default' : 'secondary'} className="font-semibold">{contract.status}</Badge>
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
@@ -535,13 +535,16 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 )}
               </div>
               <Textarea
-                className="flex-1 font-mono text-xs print:h-screen print:border-none print:p-0 print:text-black print:bg-white"
+                className="flex-1 font-mono text-xs print:hidden"
                 value={contractContent}
                 onChange={(e) => {
                     setContractContent(e.target.value);
                     if (!isDraftModified) setIsDraftModified(true);
                 }}
               />
+              <pre className="hidden print:block whitespace-pre-wrap font-code text-sm">
+                {contractContent}
+              </pre>
             </CardContent>
           </Card>
         </div>

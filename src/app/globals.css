@@ -113,13 +113,12 @@ body {
   .print\:rounded-none {
     border-radius: 0;
   }
-  .print\:h-screen {
-    height: 100vh;
-  }
-  .print\:text-black {
-    color: #000;
-  }
   .print\:bg-white {
     background-color: #fff;
+  }
+  pre {
+    font-family: 'Source Code Pro', monospace; /* Ensure consistent font */
+    white-space: pre-wrap; /* Allow long lines to wrap */
+    word-break: break-word; /* Break long words if necessary */
   }
 }
