@@ -59,12 +59,12 @@ function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
       <Separator />
       <div className="space-y-2">
           <h3 className="font-semibold">AI Rationale</h3>
-          <p className="text-sm text-muted-foreground">{result.rationale}</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{result.rationale}</p>
       </div>
       <Separator />
       <div className="space-y-3">
         <h3 className="font-semibold">Suggested Safer Alternative</h3>
-         <blockquote className="border-l-2 pl-6 italic text-sm bg-secondary/50 p-4 rounded-md">
+         <blockquote className="border-l-2 pl-6 italic text-sm bg-secondary/50 p-4 rounded-md whitespace-pre-wrap">
           {result.suggestedAlternative}
         </blockquote>
       </div>
@@ -381,3 +381,4 @@ export default function ContractDetailPage({ params: { id } }: { params: { id: s
 }
 
     
+
