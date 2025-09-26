@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type Status = 'Active' | 'In Review' | 'Drafting' | 'Expired' | 'Pending Renewal' | 'Terminated';
@@ -13,6 +14,7 @@ export interface Contract {
     textContent: string;
     fileType: string;
     createdAt: Timestamp | Date;
+    updatedAt?: Timestamp | Date;
     riskScore?: number;
 }
 

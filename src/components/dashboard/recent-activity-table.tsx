@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Card,
@@ -35,7 +36,7 @@ export function RecentActivityTable() {
   const { firestore } = useFirebase();
   const contractsQuery = useMemoFirebase(() => 
     firestore 
-      ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc'), limit(5)) 
+      ? query(collection(firestore, 'contracts'), orderBy('updatedAt', 'desc'), limit(5)) 
       : null
   , [firestore]);
   const { data: recentContracts, isLoading } = useCollection<Contract>(contractsQuery);
@@ -87,7 +88,7 @@ export function RecentActivityTable() {
                     {contract.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">{formatTimestamp(contract.createdAt)}</TableCell>
+                <TableCell className="text-right">{formatTimestamp(contract.updatedAt || contract.createdAt)}</TableCell>
               </TableRow>
             ))}
             {!isLoading && recentContracts?.length === 0 && (

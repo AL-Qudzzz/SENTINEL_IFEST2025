@@ -171,7 +171,7 @@ const seedWorkflowSteps: Omit<ApprovalStep, 'id'>[] = [
     stepName: 'Legal Review',
     status: 'Pending',
     approverName: 'Jane Doe',
-    approverAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    approverAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib,rb-4.1.0&q=80&w=1080',
     initials: 'JD',
   },
   {
@@ -179,7 +179,7 @@ const seedWorkflowSteps: Omit<ApprovalStep, 'id'>[] = [
     stepName: 'Finance Approval',
     status: 'Waiting',
     approverName: 'John Smith',
-    approverAvatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    approverAvatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib,rb-4.1.0&q=80&w=1080',
     initials: 'JS',
   },
   {
@@ -187,7 +187,7 @@ const seedWorkflowSteps: Omit<ApprovalStep, 'id'>[] = [
     stepName: 'Executive Sign-off',
     status: 'Waiting',
     approverName: 'Sarah Lee',
-    approverAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzU4Nzg4OTc0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    approverAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzU4Nzg4OTc0fDA&ixlib,rb-4.1.0&q=80&w=1080',
     initials: 'SL',
   },
 ];
@@ -260,6 +260,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         setIsSubmitting(true);
         try {
             const batch = writeBatch(firestore);
+            const contractRef = doc(firestore, 'contracts', contractId);
 
             // 1. Approve the current step
             const currentStep = approvalSteps[currentStepIndex];
@@ -273,13 +274,11 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 batch.update(nextStepRef, { status: 'Pending' as ApprovalStatus });
 
                 // 3. Update the main contract status
-                const contractRef = doc(firestore, 'contracts', contractId);
-                batch.update(contractRef, { status: nextStep.stepName });
+                batch.update(contractRef, { status: nextStep.stepName, updatedAt: serverTimestamp() });
 
             } else {
                 // This was the final step, mark contract as Active
-                const contractRef = doc(firestore, 'contracts', contractId);
-                batch.update(contractRef, { status: 'Active' });
+                batch.update(contractRef, { status: 'Active', updatedAt: serverTimestamp() });
             }
 
             await batch.commit();

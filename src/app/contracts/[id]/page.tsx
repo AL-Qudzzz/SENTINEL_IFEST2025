@@ -11,7 +11,7 @@ import {
 import { ArrowLeft, Loader2, ShieldCheck, AlertCircle, PencilRuler, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useFirebase, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
@@ -110,7 +110,10 @@ function ContractDetailView({ contract, contractId }: { contract: Contract, cont
       
       if (firestore) {
         const contractRef = doc(firestore, 'contracts', contractId);
-        await updateDoc(contractRef, { riskScore: result.riskScore });
+        await updateDoc(contractRef, { 
+          riskScore: result.riskScore,
+          updatedAt: serverTimestamp() 
+        });
         toast({
           title: 'Analysis Complete',
           description: 'Risk score has been saved to the contract.',

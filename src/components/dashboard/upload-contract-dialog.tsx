@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import {
@@ -112,6 +113,7 @@ export function UploadContractDialog() {
       textContent: contractText,
       fileType: fileType || 'application/octet-stream',
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     };
 
     const contractsCol = collection(firestore, 'contracts');
