@@ -6,3 +6,4 @@ import '@/ai/flows/extract-contract-data-flow.ts';
 import '@/ai/flows/detect-contract-risk-flow.ts';
 import '@/ai/flows/draft-contract-flow.ts';
 import '@/ai/flows/generate-contract-template-flow.ts';
+import '@/ai/flows/extract-text-from-file-flow.ts';

@@ -1,7 +1,5 @@
 'use client';
 import { useState } from 'react';
-import mammoth from 'mammoth';
-import pdfParse from 'pdf-parse';
 import {
   Dialog,
   DialogContent,
@@ -17,12 +15,22 @@ import { Label } from '@/components/ui/label';
 import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, Users, CircleDollarSign, Wand2, Clock, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/extract-contract-data-flow';
+import { extractTextFromFile } from '@/ai/flows/extract-text-from-file-flow';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFirebase } from '@/firebase/provider';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+
+function fileToDataUri(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -57,44 +65,19 @@ export function UploadContractDialog() {
     setIsParsing(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-
-    let apiEndpoint = '';
-    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      apiEndpoint = '/api/parse-docx';
-    } else if (file.type === 'application/pdf') {
-      apiEndpoint = '/api/parse-pdf';
-    } else if (file.type.startsWith('text/')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setContractText(e.target?.result as string);
-          setIsParsing(false);
-        };
-        reader.readAsText(file);
-        return;
-    } else {
-      setError('Unsupported file type. Please upload a DOCX, PDF, or TXT file.');
-      setIsParsing(false);
-      return;
-    }
-
     try {
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        body: formData,
-      });
+      const dataUri = await fileToDataUri(file);
+      const textResult = await extractTextFromFile({ fileDataUri: dataUri });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process file on the server.');
+      if (!textResult.extractedText) {
+          throw new Error("AI could not extract text from the document. It might be empty, corrupted, or an image-only file.");
       }
 
-      const resultData = await response.json();
-      setContractText(resultData.text);
+      setContractText(textResult.extractedText);
+
     } catch (err: any) {
       console.error('File parsing error:', err);
-      setError(err.message);
+      setError(err.message || "An unexpected error occurred during file processing.");
     } finally {
       setIsParsing(false);
     }
@@ -207,14 +190,14 @@ export function UploadContractDialog() {
                   <p className="mt-2 text-sm font-medium text-primary">{fileName}</p>
                 )}
               </div>
-              <Input id="file-upload-dialog" type="file" className="hidden" onChange={handleFileChange} accept=".txt,.pdf,.doc,.docx" />
+              <Input id="file-upload-dialog" type="file" className="hidden" onChange={handleFileChange} accept=".txt,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
             </Label>
           </div>
           
           {isParsing && (
               <div className="flex items-center justify-center p-4 text-muted-foreground">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  <span>Parsing document...</span>
+                  <span>AI is parsing document...</span>
               </div>
           )}
 
