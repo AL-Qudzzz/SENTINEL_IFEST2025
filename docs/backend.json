@@ -256,6 +256,11 @@
           "type": "string",
           "description": "The user's telephone number."
         },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        },
         "role": {
           "type": "string",
           "description": "The user's role in the system.",

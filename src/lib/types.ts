@@ -56,6 +56,7 @@ export interface User {
     username: string;
     email: string;
     telephone: string;
+    photoURL?: string;
     role: 'Hukum' | 'Internal' | 'Manajemen';
     createdAt: Timestamp | Date;
     updatedAt?: Timestamp | Date;

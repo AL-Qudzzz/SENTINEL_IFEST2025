@@ -2,7 +2,6 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 import {
   CircleUser,
   FileText,
@@ -45,7 +44,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { NotificationBell } from './NotificationBell';
 import Link from 'next/link';
 import { Skeleton } from '../ui/skeleton';
@@ -80,7 +78,6 @@ const navItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
   const auth = useAuth();
   const router = useRouter();
 
@@ -150,15 +147,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   className="h-12 w-full justify-start gap-2 px-2"
                 >
                   <Avatar className="h-8 w-8">
-                    {userAvatar && (
-                      <Image
-                        src={userAvatar.imageUrl}
-                        alt={userAvatar.description}
-                        width={32}
-                        height={32}
-                        data-ai-hint={userAvatar.imageHint}
-                      />
-                    )}
+                    <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
                     <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start overflow-hidden">

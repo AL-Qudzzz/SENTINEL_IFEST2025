@@ -1,14 +1,16 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useUser, useAuth, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
 import { updateProfile, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
+import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase, Pencil } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +21,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import type { User as AppUser } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -35,16 +36,16 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
-  const { auth, firestore } = useFirebase();
+  const { auth, firestore, storage } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const userDocRef = useMemoFirebase(() => (firestore && user ? doc(firestore, 'users', user.uid) : null), [firestore, user]);
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
-  const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -64,6 +65,46 @@ export default function ProfilePage() {
       });
     }
   }, [appUser, form]);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !storage) return;
+    handleUpload(file);
+  };
+
+  const handleUpload = async (file: File) => {
+    if (!user || !storage || !firestore) return;
+    setIsUploading(true);
+
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExtension}`;
+    const storageRef = ref(storage, `profile-pictures/${user.uid}/${fileName}`);
+
+    try {
+      await uploadBytes(storageRef, file);
+      const photoURL = await getDownloadURL(storageRef);
+
+      // Update Auth and Firestore
+      await updateProfile(user, { photoURL });
+      const userRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userRef, { photoURL, updatedAt: serverTimestamp() });
+
+      toast({
+        title: 'Profile Picture Updated',
+        description: 'Your new picture has been saved.',
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: 'Could not upload your profile picture. Please try again.',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
 
   const onSubmit = async (data: ProfileFormValues) => {
@@ -169,10 +210,30 @@ export default function ProfilePage() {
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                             <div className="flex items-center gap-6">
-                                <Avatar className="h-20 w-20">
-                                    {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
-                                    <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                                </Avatar>
+                                <div className="relative">
+                                    <Avatar className="h-20 w-20">
+                                        <AvatarImage src={appUser?.photoURL} alt="User Avatar" />
+                                        <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                                    </Avatar>
+                                    <Input 
+                                      type="file" 
+                                      ref={fileInputRef} 
+                                      onChange={handleFileChange}
+                                      className="hidden"
+                                      accept="image/png, image/jpeg, image/gif"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-background"
+                                      onClick={() => fileInputRef.current?.click()}
+                                      disabled={isUploading}
+                                    >
+                                        {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4"/>}
+                                        <span className="sr-only">Edit picture</span>
+                                    </Button>
+                                </div>
                                 <div className='flex-1 space-y-2'>
                                     <Label>Email</Label>
                                     <Input value={user?.email || 'No email associated'} disabled />
