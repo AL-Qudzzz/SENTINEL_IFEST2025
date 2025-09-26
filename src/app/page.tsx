@@ -8,9 +8,9 @@ import { RecentActivityTable } from '@/components/dashboard/recent-activity-tabl
 import { UpcomingDeadlines } from '@/components/dashboard/upcoming-deadlines';
 import { RiskOverviewChart } from '@/components/dashboard/risk-overview-chart';
 import { UploadContractDialog } from '@/components/dashboard/upload-contract-dialog';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
-import type { Contract } from '@/lib/types';
+import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
+import type { Contract, User as AppUser } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { Button } from '@/components/ui/button';
@@ -86,11 +86,29 @@ function DashboardStats() {
 
 export default function Home() {
   const { firestore } = useFirebase();
+  const { user } = useUser();
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
+
   const contractsQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc')) : null),
     [firestore]
   );
   const { data: contracts, isLoading: isLoadingContracts } = useCollection<Contract>(contractsQuery);
+
+  const welcomeMessage = useMemo(() => {
+    if (isAppUserLoading) {
+      return <Skeleton className="h-5 w-64" />;
+    }
+    if (appUser?.displayName) {
+      return `Welcome back, ${appUser.displayName}! Here's a summary of your contract landscape.`;
+    }
+    return "Welcome back! Here's a summary of your contract landscape.";
+  }, [appUser, isAppUserLoading]);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -99,8 +117,8 @@ export default function Home() {
           <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
             Dashboard
           </h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here&apos;s a summary of your contract landscape.
+          <p className="text-muted-foreground min-h-5">
+            {welcomeMessage}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
