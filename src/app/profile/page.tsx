@@ -47,6 +47,7 @@ export default function ProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [localPhotoURL, setLocalPhotoURL] = useState<string | undefined>(undefined);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
 
   const form = useForm<ProfileFormValues>({
@@ -71,12 +72,16 @@ export default function ProfilePage() {
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user || !storage) return;
-    await handleUpload(file);
+    if (file) {
+      setPhotoFile(file);
+      // Create a temporary URL for immediate preview
+      const previewUrl = URL.createObjectURL(file);
+      setLocalPhotoURL(previewUrl);
+    }
   };
 
-  const handleUpload = async (file: File) => {
-    if (!user || !storage || !firestore) return;
+  const handleUpload = async (file: File): Promise<string | null> => {
+    if (!user || !storage || !firestore) return null;
     setIsUploading(true);
 
     const fileExtension = file.name.split('.').pop();
@@ -86,18 +91,7 @@ export default function ProfilePage() {
     try {
       await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(storageRef);
-      
-      setLocalPhotoURL(photoURL); // Update local state immediately for UI change
-
-      // Update Auth and Firestore
-      await updateProfile(user, { photoURL });
-      const userRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userRef, { photoURL, updatedAt: serverTimestamp() });
-
-      toast({
-        title: 'Profile Picture Updated',
-        description: 'Your new picture has been saved.',
-      });
+      return photoURL;
 
     } catch (error) {
       console.error(error);
@@ -106,6 +100,7 @@ export default function ProfilePage() {
         title: 'Upload Failed',
         description: 'Could not upload your profile picture. Please try again.',
       });
+      return null;
     } finally {
       setIsUploading(false);
     }
@@ -115,9 +110,26 @@ export default function ProfilePage() {
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user || !firestore || !appUser) return;
     setIsSubmitting(true);
+    
+    let newPhotoURL = appUser.photoURL;
+
+    if (photoFile) {
+        const uploadedUrl = await handleUpload(photoFile);
+        if (uploadedUrl) {
+            newPhotoURL = uploadedUrl;
+        } else {
+            // If upload fails, stop the submission process
+            setIsSubmitting(false);
+            return;
+        }
+    }
+
     try {
-      // Update Auth profile (optional, but good for consistency)
-      await updateProfile(user, { displayName: data.displayName });
+      // Update Auth profile
+      await updateProfile(user, { 
+          displayName: data.displayName,
+          photoURL: newPhotoURL,
+      });
       
       // Update Firestore document
       const userRef = doc(firestore, 'users', user.uid);
@@ -125,8 +137,12 @@ export default function ProfilePage() {
         displayName: data.displayName,
         username: data.username,
         telephone: data.telephone,
+        photoURL: newPhotoURL,
         updatedAt: serverTimestamp(),
       });
+      
+      setLocalPhotoURL(newPhotoURL);
+      setPhotoFile(null); // Clear the file state after successful submission
 
       toast({
         title: 'Profile Updated',
@@ -238,7 +254,7 @@ export default function ProfilePage() {
                                       size="icon"
                                       className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-background"
                                       onClick={() => fileInputRef.current?.click()}
-                                      disabled={isUploading}
+                                      disabled={isUploading || isSubmitting}
                                     >
                                         {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4"/>}
                                         <span className="sr-only">Edit picture</span>
@@ -296,8 +312,8 @@ export default function ProfilePage() {
                                     <Input value={appUser?.role || 'N/A'} disabled />
                                 </div>
                             </div>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Button type="submit" disabled={isSubmitting || isUploading}>
+                                {(isSubmitting || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 <Save className="mr-2"/>
                                 Save Changes
                             </Button>
@@ -369,5 +385,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
