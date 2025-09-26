@@ -19,11 +19,25 @@ import {
   Clock,
   Send,
   MoreVertical,
+  Copy,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 const approvalWorkflow = [
   {
@@ -60,6 +74,11 @@ const activityLog = [
     { user: 'System', action: 'Contract draft created from template "MSA-v2"', time: 'Yesterday' },
 ];
 
+const collaborators = [
+    { name: 'You', email: 'jane.doe@acme.com', role: 'Owner', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080', initials: 'JD' },
+    { name: 'Alex Ray', email: 'alex.ray@acme.com', role: 'Can Edit', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080', initials: 'AR' }
+];
+
 function WorkflowStep({ step, approver, status, avatar, initials }: (typeof approvalWorkflow)[0]) {
   const getStatusIcon = () => {
     switch (status) {
@@ -88,6 +107,82 @@ function WorkflowStep({ step, approver, status, avatar, initials }: (typeof appr
   );
 }
 
+function ShareDialog() {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline">Share</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Share 'MSA with Innovate Corp'</DialogTitle>
+                    <DialogDescription>
+                        Anyone with the link can view this document.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="invite-email" className="text-sm font-medium">Invite People</Label>
+                        <div className="flex space-x-2">
+                            <Input id="invite-email" type="email" placeholder="person@example.com" />
+                            <Select defaultValue="edit">
+                                <SelectTrigger className="w-[120px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="edit">Can Edit</SelectItem>
+                                    <SelectItem value="comment">Can Comment</SelectItem>
+                                    <SelectItem value="view">Can View</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-2">
+                        <h3 className="text-sm font-medium">People with Access</h3>
+                        <div className="space-y-3">
+                            {collaborators.map(c => (
+                                <div key={c.email} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={c.avatar} alt={c.name} data-ai-hint="person portrait" />
+                                            <AvatarFallback>{c.initials}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-sm font-medium">{c.name}</p>
+                                            <p className="text-xs text-muted-foreground">{c.email}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{c.role}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="space-y-2">
+                         <h3 className="text-sm font-medium">Copy Link</h3>
+                        <div className="flex items-center space-x-2 rounded-md border bg-secondary pl-3 pr-1">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                            <Input defaultValue="https://sentinel.acme/c/1a2b3c4d" readOnly className="flex-1 bg-transparent border-0 h-8 shadow-none focus-visible:ring-0" />
+                            <Button type="submit" size="sm" className="px-3">
+                                <span className="sr-only">Copy</span>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="submit" className='w-full'>Send Invite</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export default function CollaborationPage() {
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -112,7 +207,7 @@ export default function CollaborationPage() {
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
-                <Button variant="outline">Share</Button>
+                <ShareDialog />
                 <Button>Submit for Next Stage</Button>
               </div>
             </CardHeader>
