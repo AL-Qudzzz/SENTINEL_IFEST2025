@@ -35,3 +35,18 @@ export const GenerateContractTemplateOutputSchema = z.object({
     templateContractText: z.string().describe('The full text of the professionally formatted, reusable contract template.'),
 });
 export type GenerateContractTemplateOutput = z.infer<typeof GenerateContractTemplateOutputSchema>;
+
+
+export const ExtractTextFromFileInputSchema = z.object({
+  fileDataUri: z
+    .string()
+    .describe(
+      "The file content as a data URI. It must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
+});
+export type ExtractTextFromFileInput = z.infer<typeof ExtractTextFromFileInputSchema>;
+
+export const ExtractTextFromFileOutputSchema = z.object({
+  extractedText: z.string().describe('The raw, unmodified text extracted from the file.'),
+});
+export type ExtractTextFromFileOutput = z.infer<typeof ExtractTextFromFileOutputSchema>;

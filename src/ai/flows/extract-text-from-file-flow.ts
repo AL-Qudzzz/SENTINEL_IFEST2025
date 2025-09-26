@@ -7,21 +7,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const ExtractTextFromFileInputSchema = z.object({
-  fileDataUri: z
-    .string()
-    .describe(
-      "The file content as a data URI. It must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type ExtractTextFromFileInput = z.infer<typeof ExtractTextFromFileInputSchema>;
-
-export const ExtractTextFromFileOutputSchema = z.object({
-  extractedText: z.string().describe('The raw, unmodified text extracted from the file.'),
-});
-export type ExtractTextFromFileOutput = z.infer<typeof ExtractTextFromFileOutputSchema>;
+import { ExtractTextFromFileInputSchema, ExtractTextFromFileOutputSchema, type ExtractTextFromFileInput, type ExtractTextFromFileOutput } from './schemas';
 
 
 export async function extractTextFromFile(input: ExtractTextFromFileInput): Promise<ExtractTextFromFileOutput> {
