@@ -19,9 +19,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, orderBy, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
   const getRiskVariant = (score: number): "destructive" | "secondary" | "default" => {
@@ -91,6 +92,7 @@ export default function RiskAnalysisPage() {
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
 
   const { firestore } = useFirebase();
+  const { toast } = useToast();
   const contractsQuery = useMemoFirebase(() => 
     firestore 
       ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc')) 
@@ -121,8 +123,26 @@ export default function RiskAnalysisPage() {
     try {
       const output = await detectContractRisk({ clauseText });
       setResult(output);
+
+      if (selectedContractId && firestore) {
+        const contractRef = doc(firestore, 'contracts', selectedContractId);
+        await updateDoc(contractRef, {
+          riskScore: output.riskScore,
+          updatedAt: serverTimestamp(),
+        });
+        toast({
+          title: 'Analysis Complete',
+          description: 'Risk score has been saved to the selected contract.',
+        });
+      }
+
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
+      toast({
+        variant: 'destructive',
+        title: 'Analysis Failed',
+        description: err.message || 'An unexpected error occurred.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -151,7 +171,7 @@ export default function RiskAnalysisPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4 h-full">
                 <div className="space-y-2">
-                  <Label htmlFor="contract-select">Select a contract</Label>
+                  <Label htmlFor="contract-select">Select a contract (optional)</Label>
                   <Select
                     onValueChange={handleContractSelect}
                     disabled={isLoadingContracts}
@@ -175,7 +195,13 @@ export default function RiskAnalysisPage() {
                     id="clause-text"
                     placeholder="e.g., 'The Service Provider shall not be liable for any consequential, indirect, or special damages...'"
                     value={clauseText}
-                    onChange={(e) => setClauseText(e.target.value)}
+                    onChange={(e) => {
+                      setClauseText(e.target.value);
+                      // Deselect contract if user types manually
+                      if (selectedContractId) {
+                        setSelectedContractId(null);
+                      }
+                    }}
                     className="min-h-[200px] flex-1"
                   />
                 </div>
