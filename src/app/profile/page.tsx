@@ -67,7 +67,7 @@ export default function ProfilePage() {
       });
       setLocalPhotoURL(appUser.photoURL);
     }
-  }, [appUser, isEditing]);
+  }, [appUser, isEditing, form]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -124,21 +124,23 @@ export default function ProfilePage() {
             firestoreUpdateData.photoURL = newPhotoURL;
         }
 
-        const authUpdateData: { displayName: string; photoURL?: string } = {
+        const authUpdateData: { displayName: string; photoURL?: string | null } = {
             displayName: data.displayName,
         };
         if (newPhotoURL) {
             authUpdateData.photoURL = newPhotoURL;
         } else if (appUser?.photoURL) {
             authUpdateData.photoURL = appUser.photoURL;
+        } else {
+            authUpdateData.photoURL = null;
         }
 
 
         // Step 3: Execute updates
-        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDocRefToUpdate = doc(firestore, 'users', user.uid);
         await Promise.all([
             updateAuthProfile(user, authUpdateData),
-            updateDoc(userDocRef, firestoreUpdateData)
+            updateDoc(userDocRefToUpdate, firestoreUpdateData)
         ]);
         
         // Step 4: Success state updates
@@ -316,30 +318,29 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             
-                            <div className="flex gap-2">
-                                {isEditing ? (
-                                    <>
-                                        <Button type="submit" disabled={isSubmitting}>
-                                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2"/>}
-                                            Save Changes
-                                        </Button>
-                                        <Button variant="ghost" type="button" onClick={() => {
-                                             setIsEditing(false);
-                                             setPhotoFile(null); // Reset file selection
-                                             // form.reset() is called by useEffect
-                                         }}>
-                                             Cancel
-                                         </Button>
-                                     </>
-                                ) : (
-                                    <Button type="button" onClick={() => setIsEditing(true)}>
-                                        <Edit className="mr-2"/>
-                                        Edit Profile
-                                    </Button>
-                                )}
-                           </div>
+                            {isEditing && (
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2"/>}
+                                    Save Changes
+                                </Button>
+                            )}
                         </form>
                     </Form>
+                     <div className="flex gap-2 mt-6">
+                        {!isEditing ? (
+                            <Button type="button" onClick={() => setIsEditing(true)}>
+                                <Edit className="mr-2"/>
+                                Edit Profile
+                            </Button>
+                        ) : (
+                             <Button variant="ghost" type="button" onClick={() => {
+                                 setIsEditing(false);
+                                 setPhotoFile(null); // Reset file selection
+                             }}>
+                                 Cancel
+                             </Button>
+                        )}
+                   </div>
                 </CardContent>
             </Card>
 
