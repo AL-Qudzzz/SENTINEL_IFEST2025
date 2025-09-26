@@ -1,6 +1,3 @@
-
-'use client';
-
 import {
   Card,
   CardContent,
@@ -46,6 +43,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+
+'use client';
 
 
 const approvalWorkflow = [
