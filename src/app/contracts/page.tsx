@@ -142,31 +142,33 @@ export default function ContractsPage() {
 
         <main className="flex flex-1 flex-col">
           <Card>
-            <CardHeader>
-              <CardTitle>Contracts List</CardTitle>
-              <CardDescription>
-                Browse and manage all contracts stored in the system.
-              </CardDescription>
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle>Contracts List</CardTitle>
+                <CardDescription>
+                  Browse and manage all contracts stored in the system.
+                </CardDescription>
+              </div>
+              <div className="relative w-full sm:w-auto sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by title..."
+                  className="pl-9"
+                  aria-label="Search contracts"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <Tabs value={filter} onValueChange={(value) => setFilter(value as Status | 'All')}>
-                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                 <div className="mb-4">
                   <TabsList className="overflow-x-auto overflow-y-hidden">
                     <TabsTrigger value="All">All</TabsTrigger>
                     {contractStatuses.map(status => (
                       <TabsTrigger key={status} value={status} className="whitespace-nowrap">{status}</TabsTrigger>
                     ))}
                   </TabsList>
-                   <div className="relative w-full sm:w-auto sm:flex-grow max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by title..."
-                      className="pl-9"
-                      aria-label="Search contracts"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
                 </div>
                 <TabsContent value={filter} className="mt-0">
                   <Table>
