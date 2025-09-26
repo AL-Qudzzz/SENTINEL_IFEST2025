@@ -101,14 +101,27 @@ export function UploadContractDialog() {
     }
 
     const effectiveDate = result.importantDates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
-    const expirationDate = result.importantDates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+    const expirationDateISO = result.importantDates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+
+    const getExpirationDate = () => {
+        if (expirationDateISO) {
+            const date = new Date(expirationDateISO);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString();
+            }
+        }
+        // Default to one year from now if no valid date is found
+        const oneYearFromNow = new Date();
+        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+        return oneYearFromNow.toISOString();
+    };
 
     const newContract: Omit<Contract, 'id'> = {
       title: fileName || 'Untitled Contract',
       partner: result.metadata.partiesInvolved || 'N/A',
       status: 'Drafting',
       effectiveDate: effectiveDate ? new Date(effectiveDate).toISOString() : new Date().toISOString(),
-      expirationDate: expirationDate ? new Date(expirationDate).toISOString() : new Date().toISOString(),
+      expirationDate: getExpirationDate(),
       contractValue: result.metadata.contractValue || 'N/A',
       textContent: contractText,
       fileType: fileType || 'application/octet-stream',
