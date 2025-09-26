@@ -67,16 +67,16 @@ export function NotificationBell({ children }: { children: ReactNode }) {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild className="relative">
-                <>
-                {children}
-                {expiringContracts && expiringContracts.length > 0 && (
-                    <span className="absolute top-2 right-2 flex h-3 w-3 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                    </span>
-                 )}
-                </>
+            <DropdownMenuTrigger asChild>
+                <div className="relative">
+                    {children}
+                    {expiringContracts && expiringContracts.length > 0 && (
+                        <span className="absolute top-2 right-2 flex h-3 w-3 group-data-[collapsible=icon]:top-1 group-data-[collapsible=icon]:right-1">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </span>
+                    )}
+                </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-80">
                 <DropdownMenuLabel>Expiring Soon (10 days)</DropdownMenuLabel>
