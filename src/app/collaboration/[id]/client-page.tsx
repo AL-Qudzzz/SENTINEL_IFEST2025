@@ -24,6 +24,8 @@ import {
   ArrowLeft,
   Loader2,
   Trash2,
+  Wand2,
+  PencilRuler,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -58,6 +60,8 @@ import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { generateContractTemplate, type GenerateContractTemplateOutput } from '@/ai/flows/generate-contract-template-flow';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const collaborators = [
@@ -91,6 +95,30 @@ function WorkflowStep({ stepName, approverName, status, approverAvatar, initials
       </Avatar>
     </div>
   );
+}
+
+function SmartDraftResult({ result, onCopy }: { result: GenerateContractTemplateOutput, onCopy: (text: string) => void }) {
+    return (
+      <Card>
+        <CardHeader className='flex-row items-center justify-between'>
+            <div>
+              <CardTitle className="flex items-center gap-2"><PencilRuler className="text-primary"/> Smart Draft Template</CardTitle>
+              <CardDescription>
+                This is the AI-generated professional template based on the contract under review.
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => onCopy(result.templateContractText)}>
+                <Copy className='mr-2'/>
+                Copy Template
+            </Button>
+        </CardHeader>
+        <CardContent>
+            <pre className="bg-muted p-4 rounded-md text-sm text-muted-foreground overflow-auto max-h-[600px] font-code">
+              {result.templateContractText}
+            </pre>
+        </CardContent>
+      </Card>
+    )
 }
 
 function ShareDialog({contractTitle}: {contractTitle: string}) {
@@ -204,6 +232,11 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+    
+    const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+    const [smartDraftResult, setSmartDraftResult] = useState<GenerateContractTemplateOutput | null>(null);
+    const [draftError, setDraftError] = useState<string | null>(null);
+
 
     // Fetch Comments
     const commentsQuery = useMemoFirebase(
@@ -302,6 +335,37 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const openDeleteDialog = (commentId: string) => {
         setCommentToDelete(commentId);
         setIsDeleteAlertOpen(true);
+    };
+
+    const handleGenerateSmartDraft = async () => {
+        setIsGeneratingDraft(true);
+        setDraftError(null);
+        setSmartDraftResult(null);
+        try {
+            const result = await generateContractTemplate({ originalContractText: contract.textContent });
+            setSmartDraftResult(result);
+            toast({
+                title: 'Smart Draft Generated',
+                description: 'A professional template has been created below.',
+            });
+        } catch (err: any) {
+            setDraftError(err.message || 'Failed to generate smart draft.');
+            toast({
+                variant: 'destructive',
+                title: 'Drafting Failed',
+                description: err.message || 'An unexpected error occurred.',
+            });
+        } finally {
+            setIsGeneratingDraft(false);
+        }
+    };
+
+    const handleCopyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        toast({
+            title: 'Copied to Clipboard',
+            description: 'The template text has been copied.',
+        });
     };
 
     const handleDeleteComment = async () => {
@@ -408,6 +472,10 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={handleGenerateSmartDraft} disabled={isGeneratingDraft}>
+                    {isGeneratingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2" />}
+                    Smart Draft
+                </Button>
                 <ShareDialog contractTitle={contract.title} />
                 <Button onClick={handleAdvanceStage} disabled={isSubmitting || !canSubmit || isFinalStage}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -422,6 +490,23 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
               />
             </CardContent>
           </Card>
+          {isGeneratingDraft && (
+                <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <p>AI is generating a professional template...</p>
+                    </div>
+                </div>
+          )}
+          {draftError && (
+             <Alert variant="destructive">
+                <AlertTitle>Drafting Failed</AlertTitle>
+                <AlertDescription>{draftError}</AlertDescription>
+             </Alert>
+          )}
+          {smartDraftResult && (
+             <SmartDraftResult result={smartDraftResult} onCopy={handleCopyToClipboard} />
+          )}
         </div>
 
         {/* Right Sidebar */}

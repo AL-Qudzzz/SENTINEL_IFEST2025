@@ -25,3 +25,13 @@ export const DraftContractOutputSchema = z.object({
   redraftedContractText: z.string().describe('The full text of the redrafted contract, incorporating the suggested revisions.'),
 });
 export type DraftContractOutput = z.infer<typeof DraftContractOutputSchema>;
+
+export const GenerateContractTemplateInputSchema = z.object({
+    originalContractText: z.string().describe('The full original text of the contract to be used as a base for the template.'),
+});
+export type GenerateContractTemplateInput = z.infer<typeof GenerateContractTemplateInputSchema>;
+
+export const GenerateContractTemplateOutputSchema = z.object({
+    templateContractText: z.string().describe('The full text of the professionally formatted, reusable contract template.'),
+});
+export type GenerateContractTemplateOutput = z.infer<typeof GenerateContractTemplateOutputSchema>;
