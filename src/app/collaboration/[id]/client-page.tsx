@@ -250,7 +250,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         
         if (contract.createdAt) {
              const createdAtDate = (contract.createdAt as any).toDate ? (contract.createdAt as any).toDate() : new Date(contract.createdAt as any);
-             if (createdAtDate) {
+             if (createdAtDate instanceof Date && !isNaN(createdAtDate.getTime())) {
                  combinedLog.push({
                     id: `creation-${contract.id}`,
                     user: 'System',
@@ -465,29 +465,31 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                            </div>
                         ))}
                         {!isLoadingComments && comments?.map((comment) => (
-                            <div key={comment.id} className="group relative flex items-start gap-3">
+                            <div key={comment.id} className="group flex items-start gap-3">
                                 <Avatar className="h-8 w-8">
                                     <AvatarImage src={comment.authorAvatar} alt={comment.authorName} data-ai-hint="person portrait" />
                                     <AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <div className="flex-1 pr-8">
+                                <div className="flex-1">
                                     <div className="flex justify-between items-start">
                                         <p className="text-sm font-semibold">{comment.authorName}</p>
-                                        <p className="text-xs text-muted-foreground flex-shrink-0">{formatTimestamp(comment.createdAt)}</p>
+                                        <p className="text-xs text-muted-foreground flex-shrink-0 pr-8">{formatTimestamp(comment.createdAt)}</p>
                                     </div>
-                                    <p className="text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{comment.commentText}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="flex-1 text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{comment.commentText}</p>
+                                        {user && user.uid === comment.authorId && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 opacity-50 hover:opacity-100 shrink-0"
+                                                onClick={() => openDeleteDialog(comment.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive/70" />
+                                                <span className="sr-only">Delete comment</span>
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
-                                {user && user.uid === comment.authorId && (
-                                    <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute top-0 right-0 h-7 w-7 opacity-50 hover:opacity-100"
-                                    onClick={() => openDeleteDialog(comment.id)}
-                                    >
-                                    <Trash2 className="h-4 w-4 text-destructive/70" />
-                                    <span className="sr-only">Delete comment</span>
-                                    </Button>
-                                )}
                             </div>
                         ))}
                         {!isLoadingComments && comments?.length === 0 && (
