@@ -4,3 +4,4 @@ config();
 import '@/ai/flows/answer-contract-questions-flow.ts';
 import '@/ai/flows/extract-contract-data-flow.ts';
 import '@/ai/flows/detect-contract-risk-flow.ts';
+import '@/ai/flows/draft-contract-flow.ts';

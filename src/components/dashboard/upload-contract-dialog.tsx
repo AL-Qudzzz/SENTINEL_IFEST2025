@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, Users, CircleDollarSign } from 'lucide-react';
+import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, Users, CircleDollarSign, Wand2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/extract-contract-data-flow';
 import { Separator } from '../ui/separator';
@@ -65,7 +65,7 @@ export function UploadContractDialog() {
         reader.readAsText(file);
       } else {
         setContractText(''); // Clear text if not a text file
-        setError('File uploaded, but analysis is only supported for .txt files at this time.');
+        setError('File uploaded, but AI analysis is only supported for .txt files at this time.');
       }
     }
   };
@@ -115,7 +115,6 @@ export function UploadContractDialog() {
     };
 
     const contractsCol = collection(firestore, 'contracts');
-    // Use the non-blocking version which has better error handling
     addDocumentNonBlocking(contractsCol, newContract);
 
     toast({
@@ -142,9 +141,9 @@ export function UploadContractDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Upload & Analyze Contract</DialogTitle>
+          <DialogTitle>New Contract: Smart Data Extraction</DialogTitle>
           <DialogDescription>
-            Upload a contract file to automatically extract key information.
+            Upload a contract file. Our AI will automatically read, understand, and extract key information.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
@@ -178,7 +177,10 @@ export function UploadContractDialog() {
           {result && (
             <ScrollArea className="max-h-[40vh] pr-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Extracted Information</h3>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Wand2 className="text-primary"/>
+                  Extracted Information
+                </h3>
                 <div className="grid gap-4 rounded-lg border p-4">
                   <InfoItem icon={FileText} label="Contract Type" value={result.metadata.contractType || 'N/A'} />
                   <InfoItem icon={Users} label="Parties Involved" value={result.metadata.partiesInvolved || 'N/A'} />
@@ -220,10 +222,13 @@ export function UploadContractDialog() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
+                  Extracting...
                 </>
               ) : (
-                'Analyze Contract'
+                <>
+                  <Wand2 className="mr-2"/>
+                  Extract Data
+                </>
               )}
             </Button>
           )}
@@ -244,5 +249,3 @@ function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType, label
     </div>
   )
 }
-
-    
