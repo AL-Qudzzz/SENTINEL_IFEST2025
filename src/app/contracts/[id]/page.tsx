@@ -11,7 +11,7 @@ import {
 import { ArrowLeft, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useFirebase, useDoc, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
   const getRiskVariant = (score: number): "destructive" | "secondary" | "default" => {
@@ -70,21 +71,39 @@ function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
   );
 }
 
-function ContractDetailView({ contract }: { contract: Contract }) {
+function ContractDetailView({ contract, contractId }: { contract: Contract, contractId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DetectContractRiskOutput | null>(null);
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
 
   const handleAnalyze = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // For simplicity, we analyze the entire contract text.
-      // In a real app, you might let users select specific clauses.
       const result = await detectContractRisk({ clauseText: contract.textContent });
       setAnalysisResult(result);
+      
+      // After successful analysis, save the risk score to Firestore
+      if (firestore) {
+        const contractRef = doc(firestore, 'contracts', contractId);
+        await updateDoc(contractRef, {
+          riskScore: result.riskScore,
+        });
+        toast({
+          title: 'Success',
+          description: 'Risk score has been saved to the contract.',
+        });
+      }
+
     } catch (err: any) {
       setError(err.message || 'Failed to analyze contract.');
+       toast({
+        variant: 'destructive',
+        title: 'Analysis Failed',
+        description: err.message || 'An unexpected error occurred.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -125,7 +144,7 @@ function ContractDetailView({ contract }: { contract: Contract }) {
           {!isLoading && !analysisResult && (
             <div className="flex flex-col items-center justify-center h-48 border-2 border-dashed rounded-lg text-center p-4">
                 <p className="text-muted-foreground mb-4">
-                  Click the button to start the AI-powered risk analysis for this contract.
+                  Click the button to start the AI-powered risk analysis for this contract. The result will be saved automatically.
                 </p>
                 <Button onClick={handleAnalyze} disabled={isLoading}>
                     <ShieldCheck className="mr-2" />
@@ -213,7 +232,7 @@ export default function ContractDetailPage({ params }: { params: { id: string } 
 
       <main className="flex-1 space-y-6">
         {isLoading && <LoadingSkeleton />}
-        {!isLoading && contract && <ContractDetailView contract={contract} />}
+        {!isLoading && contract && <ContractDetailView contract={contract} contractId={id} />}
         {!isLoading && !contract && (
            <Card>
               <CardContent className="flex items-center justify-center h-64">

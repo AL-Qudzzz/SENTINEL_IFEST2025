@@ -36,6 +36,13 @@ const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'o
   'Terminated': 'destructive',
 };
 
+const getRiskVariant = (score?: number): "destructive" | "secondary" | "default" => {
+  if (typeof score !== 'number') return 'outline';
+  if (score > 75) return 'destructive';
+  if (score > 40) return 'secondary';
+  return 'default';
+};
+
 const contractStatuses: Status[] = ['Active', 'In Review', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated'];
 
 export default function ContractsPage() {
@@ -100,6 +107,7 @@ export default function ContractsPage() {
                       <TableHead>Contract Title</TableHead>
                       <TableHead>Partner</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Risk Score</TableHead>
                       <TableHead>Expiration Date</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -110,6 +118,7 @@ export default function ContractsPage() {
                         <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                       </TableRow>
@@ -121,6 +130,11 @@ export default function ContractsPage() {
                         <TableCell>
                           <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
                             {contract.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getRiskVariant(contract.riskScore)}>
+                            {contract.riskScore ?? 'N/A'}
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDate(contract.expirationDate)}</TableCell>
@@ -136,7 +150,7 @@ export default function ContractsPage() {
                     ))}
                     {!isLoading && contracts?.length === 0 && (
                        <TableRow>
-                         <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                            No contracts found for this filter.
                          </TableCell>
                        </TableRow>

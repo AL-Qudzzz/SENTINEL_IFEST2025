@@ -13,4 +13,5 @@ export interface Contract {
     textContent: string;
     fileType: string;
     createdAt: Timestamp | Date;
+    riskScore?: number;
 }
