@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,9 +78,14 @@ export default function ContractsPage() {
 
   const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
 
-  const filteredContracts = contracts?.filter(contract =>
-    contract.title.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredContracts = useMemo(() => {
+      if (!contracts) return [];
+      if (!searchTerm) return contracts;
+      return contracts.filter(contract =>
+          contract.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [contracts, searchTerm]);
+
 
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
@@ -167,73 +172,71 @@ export default function ContractsPage() {
                     ))}
                   </TabsList>
                 </div>
-                <TabsContent value={filter} className="mt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Contract Title</TableHead>
-                        <TableHead>Partner</TableHead>
-                        <TableHead className="whitespace-nowrap">Status</TableHead>
-                        <TableHead className="whitespace-nowrap">Risk Score</TableHead>
-                        <TableHead className="whitespace-nowrap">Expiration Date</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading && Array.from({ length: 5 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
-                        </TableRow>
-                      ))}
-                      {!isLoading && filteredContracts.map((contract) => (
-                        <TableRow key={contract.id}>
-                          <TableCell className="font-medium">
-                             <Link href={`/contracts/${contract.id}`} className="hover:underline">
-                              {contract.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
-                              {contract.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <Badge variant={getRiskVariant(contract.riskScore)}>
-                              {contract.riskScore ?? 'N/A'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{formatDate(contract.expirationDate)}</TableCell>
-                          <TableCell className="text-right">
-                             <Button variant="ghost" size="icon" asChild>
-                              <Link href={`/collaboration/${contract.id}`} title="Collaborate">
-                                <Users className="h-4 w-4" />
-                                <span className="sr-only">Collaborate on contract</span>
-                              </Link>
-                            </Button>
-                             <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(contract)} title="Delete">
-                              <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
-                              <span className="sr-only">Delete contract</span>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {!isLoading && filteredContracts.length === 0 && (
-                         <TableRow>
-                           <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                             No contracts found.
-                           </TableCell>
-                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
               </Tabs>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Contract Title</TableHead>
+                    <TableHead>Partner</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="whitespace-nowrap">Risk Score</TableHead>
+                    <TableHead className="whitespace-nowrap">Expiration Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading && Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                    </TableRow>
+                  ))}
+                  {!isLoading && filteredContracts.map((contract) => (
+                    <TableRow key={contract.id}>
+                      <TableCell className="font-medium">
+                         <Link href={`/contracts/${contract.id}`} className="hover:underline">
+                          {contract.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
+                          {contract.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={getRiskVariant(contract.riskScore)}>
+                          {contract.riskScore ?? 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{formatDate(contract.expirationDate)}</TableCell>
+                      <TableCell className="text-right">
+                         <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/collaboration/${contract.id}`} title="Collaborate">
+                            <Users className="h-4 w-4" />
+                            <span className="sr-only">Collaborate on contract</span>
+                          </Link>
+                        </Button>
+                         <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(contract)} title="Delete">
+                          <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
+                          <span className="sr-only">Delete contract</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!isLoading && filteredContracts.length === 0 && (
+                     <TableRow>
+                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                         No contracts found.
+                       </TableCell>
+                     </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </main>
