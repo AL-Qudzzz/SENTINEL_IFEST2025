@@ -24,3 +24,16 @@ export interface ContractComment {
     commentText: string;
     createdAt: Timestamp;
 }
+
+export type ApprovalStatus = 'Pending' | 'Approved' | 'Rejected' | 'Waiting';
+
+export interface ApprovalStep {
+    id: string;
+    order: number;
+    stepName: string;
+    status: ApprovalStatus;
+    approverName: string;
+    approverAvatar: string;
+    initials: string;
+    approvedAt?: Timestamp | null;
+}

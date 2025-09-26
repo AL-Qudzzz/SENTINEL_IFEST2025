@@ -39,38 +39,15 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import type { Contract, ContractComment } from '@/lib/types';
+import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { doc, collection, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import type { Contract, ContractComment, ApprovalStep, ApprovalStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
-
-const approvalWorkflow = [
-  {
-    step: 'Legal Review',
-    approver: 'Jane Doe',
-    status: 'Approved',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    initials: 'JD',
-  },
-  {
-    step: 'Finance Approval',
-    approver: 'John Smith',
-    status: 'Pending',
-    avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    initials: 'JS',
-  },
-  {
-    step: 'Executive Sign-off',
-    approver: 'Sarah Lee',
-    status: 'Waiting',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzU4Nzg4OTc0fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    initials: 'SL',
-  },
-];
 
 const activityLog = [
     { user: 'Jane Doe', action: 'Approved Legal Review', time: '1 hour ago' },
@@ -83,7 +60,7 @@ const collaborators = [
     { name: 'Alex Ray', email: 'alex.ray@acme.com', role: 'Can Edit', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib,rb-4.1.0&q=80&w=1080', initials: 'AR' }
 ];
 
-function WorkflowStep({ step, approver, status, avatar, initials }: (typeof approvalWorkflow)[0]) {
+function WorkflowStep({ stepName, approverName, status, approverAvatar, initials }: Omit<ApprovalStep, 'id' | 'order'>) {
   const getStatusIcon = () => {
     switch (status) {
       case 'Approved':
@@ -100,11 +77,11 @@ function WorkflowStep({ step, approver, status, avatar, initials }: (typeof appr
     <div className="flex items-center gap-4">
       <div className="flex-shrink-0">{getStatusIcon()}</div>
       <div className="flex-1">
-        <p className="font-medium text-sm">{step}</p>
-        <p className="text-xs text-muted-foreground">{approver}</p>
+        <p className="font-medium text-sm">{stepName}</p>
+        <p className="text-xs text-muted-foreground">{approverName}</p>
       </div>
       <Avatar className="h-8 w-8">
-        <AvatarImage src={avatar} alt={approver} data-ai-hint="person portrait" />
+        <AvatarImage src={approverAvatar} alt={approverName} data-ai-hint="person portrait" />
         <AvatarFallback>{initials}</AvatarFallback>
       </Avatar>
     </div>
@@ -187,15 +164,73 @@ function ShareDialog({contractTitle}: {contractTitle: string}) {
     )
 }
 
+// Initial workflow data to seed if it doesn't exist
+const seedWorkflowSteps: Omit<ApprovalStep, 'id'>[] = [
+  {
+    order: 1,
+    stepName: 'Legal Review',
+    status: 'Pending',
+    approverName: 'Jane Doe',
+    approverAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    initials: 'JD',
+  },
+  {
+    order: 2,
+    stepName: 'Finance Approval',
+    status: 'Waiting',
+    approverName: 'John Smith',
+    approverAvatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    initials: 'JS',
+  },
+  {
+    order: 3,
+    stepName: 'Executive Sign-off',
+    status: 'Waiting',
+    approverName: 'Sarah Lee',
+    approverAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzU4Nzg4OTc0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    initials: 'SL',
+  },
+];
+
 function CollaborationView({ contract, contractId }: { contract: Contract, contractId: string }) {
     const { firestore, user } = useFirebase();
+    const { toast } = useToast();
     const [newComment, setNewComment] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Fetch Comments
     const commentsQuery = useMemoFirebase(
         () => (firestore && contractId ? query(collection(firestore, 'contracts', contractId, 'comments'), orderBy('createdAt', 'asc')) : null),
         [firestore, contractId]
     );
     const { data: comments, isLoading: isLoadingComments } = useCollection<ContractComment>(commentsQuery);
+    
+    // Fetch Approval Workflow Steps
+    const approvalsQuery = useMemoFirebase(
+        () => (firestore && contractId ? query(collection(firestore, 'contracts', contractId, 'approvals'), orderBy('order', 'asc')) : null),
+        [firestore, contractId]
+    );
+    const { data: approvalSteps, isLoading: isLoadingApprovals } = useCollection<ApprovalStep>(approvalsQuery);
+
+
+    // Seed workflow steps if they don't exist for this contract
+    useEffect(() => {
+        const seedData = async () => {
+            if (firestore && contractId && !isLoadingApprovals && approvalSteps?.length === 0) {
+                console.log(`Seeding workflow for contract ${contractId}`);
+                const batch = writeBatch(firestore);
+                const approvalsCollection = collection(firestore, 'contracts', contractId, 'approvals');
+                seedWorkflowSteps.forEach(step => {
+                    const newStepRef = doc(approvalsCollection);
+                    batch.set(newStepRef, step);
+                });
+                await batch.commit();
+                toast({ title: 'Workflow initialized', description: 'Approval steps have been created for this contract.' });
+            }
+        };
+        seedData();
+    }, [firestore, contractId, approvalSteps, isLoadingApprovals, toast]);
+
 
     const handleCommentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -213,6 +248,52 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         setNewComment('');
     };
 
+    const handleAdvanceStage = async () => {
+        if (!firestore || !approvalSteps || isSubmitting) return;
+
+        const currentStepIndex = approvalSteps.findIndex(step => step.status === 'Pending');
+        if (currentStepIndex === -1) {
+            toast({ variant: 'destructive', title: 'Error', description: 'No pending approval step found.' });
+            return;
+        }
+        
+        setIsSubmitting(true);
+        try {
+            const batch = writeBatch(firestore);
+
+            // 1. Approve the current step
+            const currentStep = approvalSteps[currentStepIndex];
+            const currentStepRef = doc(firestore, 'contracts', contractId, 'approvals', currentStep.id);
+            batch.update(currentStepRef, { status: 'Approved' as ApprovalStatus, approvedAt: serverTimestamp() });
+
+            // 2. Activate the next step (if it exists)
+            const nextStep = approvalSteps[currentStepIndex + 1];
+            if (nextStep) {
+                const nextStepRef = doc(firestore, 'contracts', contractId, 'approvals', nextStep.id);
+                batch.update(nextStepRef, { status: 'Pending' as ApprovalStatus });
+
+                // 3. Update the main contract status
+                const contractRef = doc(firestore, 'contracts', contractId);
+                batch.update(contractRef, { status: nextStep.stepName });
+
+            } else {
+                // This was the final step, mark contract as Active
+                const contractRef = doc(firestore, 'contracts', contractId);
+                batch.update(contractRef, { status: 'Active' });
+            }
+
+            await batch.commit();
+
+            toast({ title: 'Stage Advanced', description: 'The contract has moved to the next approval stage.' });
+
+        } catch (error) {
+            console.error('Failed to advance stage:', error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Failed to advance to the next stage.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const formatTimestamp = (timestamp: any) => {
         if (!timestamp) return 'just now';
         try {
@@ -223,6 +304,10 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         }
     };
     
+    const currentStage = approvalSteps?.find(s => s.status === 'Pending')?.stepName || contract.status;
+    const isFinalStage = approvalSteps && approvalSteps.every(s => s.status === 'Approved');
+    const canSubmit = approvalSteps?.some(s => s.status === 'Pending');
+
     return (
         <div className="grid flex-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {/* Main Contract Editor */}
@@ -232,12 +317,15 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
               <div>
                 <CardTitle>{contract.title}</CardTitle>
                 <CardDescription>
-                  Currently in <span className="text-yellow-500 font-semibold">Finance Approval</span> stage. Version 2.1.
+                  Currently in <span className="text-yellow-500 font-semibold">{currentStage}</span> stage. Version 2.1.
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
                 <ShareDialog contractTitle={contract.title} />
-                <Button>Submit for Next Stage</Button>
+                <Button onClick={handleAdvanceStage} disabled={isSubmitting || !canSubmit || isFinalStage}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isFinalStage ? "Fully Approved" : "Submit for Next Stage"}
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex">
@@ -259,8 +347,9 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {approvalWorkflow.map((item, index) => (
-                <WorkflowStep key={index} {...item} />
+              {isLoadingApprovals && Array.from({length: 3}).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              {!isLoadingApprovals && approvalSteps?.map((step) => (
+                <WorkflowStep key={step.id} {...step} />
               ))}
             </CardContent>
           </Card>

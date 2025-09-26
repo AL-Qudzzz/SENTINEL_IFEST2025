@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Card,
@@ -21,25 +21,27 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import type { Contract } from '@/lib/types';
+import type { Contract, Status } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-
-// Mock data for current stage, this would ideally come from the contract data
-const getApprovalStage = (contractId: string) => {
-    const stages = ['Legal Review', 'Finance Approval', 'Executive Sign-off', 'Active'];
-    // Simple logic to distribute stages for demo purposes
-    const hash = contractId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return stages[hash % stages.length];
-}
 
 const stageVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Legal Review': 'secondary',
   'Finance Approval': 'secondary',
   'Executive Sign-off': 'default',
-  'Active': 'outline'
+  'Active': 'outline',
+  'In Review': 'secondary',
+  'Drafting': 'outline',
 };
 
+const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  'Active': 'default',
+  'In Review': 'secondary',
+  'Drafting': 'outline',
+  'Expired': 'destructive',
+  'Pending Renewal': 'default',
+  'Terminated': 'destructive',
+};
 
 export default function CollaborationHubPage() {
   const { firestore } = useFirebase();
@@ -50,7 +52,6 @@ export default function CollaborationHubPage() {
   }, [firestore]);
 
   const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
-
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -93,7 +94,7 @@ export default function CollaborationHubPage() {
                   </TableRow>
                 ))}
                 {!isLoading && contracts?.map((contract) => {
-                    const currentStage = getApprovalStage(contract.id);
+                    const currentStage = contract.status;
                     return (
                       <TableRow key={contract.id}>
                         <TableCell className="font-medium">{contract.title}</TableCell>
@@ -104,7 +105,7 @@ export default function CollaborationHubPage() {
                             </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={contract.status === 'Active' ? 'default' : 'secondary'}>
+                           <Badge variant={statusBadgeVariant[contract.status as Status] ?? 'default'}>
                             {contract.status}
                           </Badge>
                         </TableCell>
