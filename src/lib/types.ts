@@ -25,6 +25,8 @@ export interface Contract {
     riskScore?: number;
 }
 
+export type WithId<T> = T & { id: string };
+
 export interface ContractComment {
     id: string;
     authorId: string;

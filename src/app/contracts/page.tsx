@@ -1,8 +1,6 @@
-
 'use client';
 
-import { useState, useMemo } from 'react';
-import { collection, query, orderBy, where, Query, doc, deleteDoc } from 'firebase/firestore';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -33,12 +31,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Trash2, Search } from 'lucide-react';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import type { Contract, Status } from '@/lib/types';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { ContractProvider, useContract } from '@/hooks/use-contract';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 
 const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
@@ -56,36 +56,24 @@ const getRiskVariant = (score?: number): "destructive" | "secondary" | "default"
   return 'default';
 };
 
-const contractStatuses: Status[] = ['Active', 'Drafting', 'Pending Approval', 'Pending Renewal', 'Expired'];
+const contractStatuses: (Status | 'All')[] = ['All', 'Active', 'Drafting', 'Pending Approval', 'Pending Renewal', 'Expired'];
 
-export default function ContractsPage() {
+
+function ContractsPageContent() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
-  const [filter, setFilter] = useState<Status | 'All'>('All');
-  const [searchTerm, setSearchTerm] = useState('');
+  const { 
+    filteredContracts, 
+    isLoading, 
+    activeFilter, 
+    handleFilterChange,
+    searchTerm,
+    setSearchTerm
+  } = useContract();
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<Contract | null>(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
-
-  const contractsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    const baseCollection = collection(firestore, 'contracts');
-    if (filter === 'All') {
-      return query(baseCollection, orderBy('createdAt', 'desc'));
-    }
-    return query(baseCollection, where('status', '==', filter), orderBy('createdAt', 'desc'));
-  }, [firestore, filter]);
-
-  const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
-
-  const filteredContracts = useMemo(() => {
-      if (!contracts) return [];
-      if (!searchTerm) return contracts;
-      return contracts.filter(contract =>
-          contract.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-  }, [contracts, searchTerm]);
-
 
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
@@ -163,10 +151,9 @@ export default function ContractsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Tabs value={filter} onValueChange={(value) => setFilter(value as Status | 'All')}>
+              <Tabs value={activeFilter} onValueChange={(value) => handleFilterChange(value as Status | 'All')}>
                  <div className="mb-4">
                   <TabsList className="overflow-x-auto overflow-y-hidden">
-                    <TabsTrigger value="All">All</TabsTrigger>
                     {contractStatuses.map(status => (
                       <TabsTrigger key={status} value={status} className="whitespace-nowrap">{status}</TabsTrigger>
                     ))}
@@ -274,4 +261,13 @@ export default function ContractsPage() {
       )}
     </>
   );
+}
+
+
+export default function ContractsPage() {
+    return (
+        <ContractProvider>
+            <ContractsPageContent />
+        </ContractProvider>
+    )
 }
