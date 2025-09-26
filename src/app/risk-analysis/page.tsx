@@ -17,14 +17,13 @@ import { detectContractRisk, type DetectContractRiskOutput } from '@/ai/flows/de
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
+import type { Contract } from '@/lib/types';
+import { Label } from '@/components/ui/label';
 
 function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
-  const getRiskColor = (score: number) => {
-    if (score > 75) return 'bg-red-500';
-    if (score > 40) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
   const getRiskVariant = (score: number): "destructive" | "secondary" | "default" => {
     if (score > 75) return 'destructive';
     if (score > 40) return 'secondary';
@@ -48,7 +47,7 @@ function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
             <h3 className="font-semibold">Overall Risk Score</h3>
             <Badge variant={getRiskVariant(result.riskScore)}>{result.riskScore} / 100</Badge>
           </div>
-          <Progress value={result.riskScore} className="w-full [&>div]:bg-red-500" />
+          <Progress value={result.riskScore} />
            <p className="text-sm text-muted-foreground">
             {result.riskScore > 75 ? 'High Risk' : result.riskScore > 40 ? 'Medium Risk' : 'Low Risk'}
           </p>
@@ -74,7 +73,7 @@ function RiskAnalysisResult({ result }: { result: DetectContractRiskOutput }) {
         <Separator />
         <div className="space-y-3">
           <h3 className="font-semibold">Suggested Alternative Clause</h3>
-           <blockquote className="border-l-2 pl-6 italic text-sm">
+           <blockquote className="border-l-2 pl-6 italic text-sm bg-secondary/50 p-4 rounded-md">
             {result.suggestedAlternative}
           </blockquote>
         </div>
@@ -89,11 +88,30 @@ export default function RiskAnalysisPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DetectContractRiskOutput | null>(null);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+
+  const { firestore } = useFirebase();
+  const contractsQuery = useMemoFirebase(() => 
+    firestore 
+      ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc')) 
+      : null
+  , [firestore]);
+  const { data: contracts, isLoading: isLoadingContracts } = useCollection<Contract>(contractsQuery);
+
+  const handleContractSelect = (contractId: string) => {
+    const selected = contracts?.find(c => c.id === contractId);
+    if (selected) {
+      setClauseText(selected.textContent);
+      setSelectedContractId(contractId);
+      setResult(null); // Clear previous results
+      setError(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clauseText) {
-      setError('Please enter a contract clause to analyze.');
+      setError('Please select a contract or paste a clause to analyze.');
       return;
     }
     setIsLoading(true);
@@ -127,17 +145,40 @@ export default function RiskAnalysisPage() {
             <CardHeader>
               <CardTitle>Analyze Clause</CardTitle>
               <CardDescription>
-                Paste a clause from your contract below to begin the analysis.
+                Select an existing contract or paste a clause below to begin.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4 h-full">
-                <Textarea
-                  placeholder="e.g., 'The Service Provider shall not be liable for any consequential, indirect, or special damages...'"
-                  value={clauseText}
-                  onChange={(e) => setClauseText(e.target.value)}
-                  className="min-h-[200px] flex-1"
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="contract-select">Select a contract</Label>
+                  <Select
+                    onValueChange={handleContractSelect}
+                    disabled={isLoadingContracts}
+                    value={selectedContractId ?? ''}
+                  >
+                    <SelectTrigger id="contract-select">
+                      <SelectValue placeholder={isLoadingContracts ? "Loading contracts..." : "Select a contract"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contracts?.map(contract => (
+                        <SelectItem key={contract.id} value={contract.id}>
+                          {contract.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 flex-1 flex flex-col">
+                  <Label htmlFor="clause-text">Contract text (or paste clause here)</Label>
+                  <Textarea
+                    id="clause-text"
+                    placeholder="e.g., 'The Service Provider shall not be liable for any consequential, indirect, or special damages...'"
+                    value={clauseText}
+                    onChange={(e) => setClauseText(e.target.value)}
+                    className="min-h-[200px] flex-1"
+                  />
+                </div>
                 <Button type="submit" disabled={isLoading || !clauseText}>
                   {isLoading ? (
                     <>
