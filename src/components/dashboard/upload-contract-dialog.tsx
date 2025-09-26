@@ -186,7 +186,7 @@ export function UploadContractDialog() {
       }
 
       // Priority 2: Calculate from effective date and duration
-      if (finalEffectiveDate && contractDurationStr) {
+      if (contractDurationStr) {
         const durationParts = contractDurationStr.toLowerCase().split(' ');
         const amount = parseInt(durationParts[0], 10);
         const unit = durationParts[1];
