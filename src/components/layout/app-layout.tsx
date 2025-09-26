@@ -46,6 +46,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '../ui/skeleton';
+import { NotificationBell } from './NotificationBell';
 
 const navItems = [
   {
@@ -106,11 +107,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader className="h-16 items-center flex justify-between">
             <div
               data-sidebar="header-content"
-              className="flex items-center gap-2 overflow-hidden group-hover/sidebar:w-full w-0"
+              className="flex items-center justify-center gap-2 overflow-hidden w-full"
             >
               <span className="font-headline text-lg font-bold">SENTINEL</span>
             </div>
-            <SidebarTrigger className='md:hidden' />
+            <SidebarTrigger className='md:hidden absolute right-2 top-4' />
           </SidebarHeader>
           <SidebarContent className="flex-1">
             <SidebarGroup>
@@ -133,33 +134,56 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="p-2 flex flex-row items-center justify-between">
-             <Link href="/profile" className="w-full">
-                <Button
-                  variant="ghost"
-                  className="h-12 w-full justify-start gap-2 px-2"
-                  aria-label="View Profile"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
-                    <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-start overflow-hidden w-0 group-hover/sidebar:w-full transition-[width]">
-                    {isAppUserLoading ? (
-                      <div className='space-y-1'>
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-3 w-16" />
-                      </div>
-                    ) : (
-                      <>
-                        <span className="font-medium">{appUser?.displayName || 'User'}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {appUser?.role || 'Role'}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </Button>
-              </Link>
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="h-12 w-full justify-start gap-2 px-2"
+                    aria-label="View Profile"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
+                      <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start overflow-hidden w-0 group-hover/sidebar:w-full transition-[width]">
+                      {isAppUserLoading ? (
+                        <div className='space-y-1'>
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-16" />
+                        </div>
+                      ) : (
+                        <>
+                          <span className="font-medium">{appUser?.displayName || 'User'}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {appUser?.role || 'Role'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent side="right" align="start" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <CircleUser className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
           </SidebarFooter>
         </div>
       </Sidebar>
