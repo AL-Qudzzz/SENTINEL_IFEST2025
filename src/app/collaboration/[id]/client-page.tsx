@@ -22,12 +22,23 @@ import {
   Copy,
   Link as LinkIcon,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
     Dialog,
     DialogContent,
@@ -40,7 +51,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, orderBy, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc } from 'firebase/firestore';
 import type { Contract, ContractComment, ApprovalStep, ApprovalStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -191,6 +202,8 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const { toast } = useToast();
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+    const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
     // Fetch Comments
     const commentsQuery = useMemoFirebase(
@@ -284,6 +297,34 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         addDocumentNonBlocking(collection(firestore, 'contracts', contractId, 'comments'), commentData);
         setNewComment('');
     };
+
+    const openDeleteDialog = (commentId: string) => {
+        setCommentToDelete(commentId);
+        setIsDeleteAlertOpen(true);
+    };
+
+    const handleDeleteComment = async () => {
+        if (!commentToDelete || !firestore) return;
+
+        try {
+            await deleteDoc(doc(firestore, 'contracts', contractId, 'comments', commentToDelete));
+            toast({
+                title: 'Comment Deleted',
+                description: 'The comment has been successfully removed.',
+            });
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Failed to delete the comment.',
+            });
+        } finally {
+            setIsDeleteAlertOpen(false);
+            setCommentToDelete(null);
+        }
+    };
+
 
     const handleAdvanceStage = async () => {
         if (!firestore || !approvalSteps || isSubmitting) return;
@@ -414,7 +455,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                            </div>
                         ))}
                         {!isLoadingComments && comments?.map((comment) => (
-                            <div key={comment.id} className="flex items-start gap-3">
+                            <div key={comment.id} className="group relative flex items-start gap-3">
                                 <Avatar className="h-8 w-8">
                                     <AvatarImage src={comment.authorAvatar} alt={comment.authorName} data-ai-hint="person portrait" />
                                     <AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback>
@@ -426,6 +467,17 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                                     </div>
                                     <p className="text-sm text-muted-foreground bg-secondary/50 p-2 rounded-md mt-1">{comment.commentText}</p>
                                 </div>
+                                {user && user.uid === comment.authorId && (
+                                    <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-0 right-0 h-7 w-7 opacity-0 group-hover:opacity-100"
+                                    onClick={() => openDeleteDialog(comment.id)}
+                                    >
+                                    <Trash2 className="h-4 w-4 text-destructive/70" />
+                                    <span className="sr-only">Delete comment</span>
+                                    </Button>
+                                )}
                             </div>
                         ))}
                         {!isLoadingComments && comments?.length === 0 && (
@@ -472,6 +524,25 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
              </Tabs>
           </Card>
         </div>
+        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your comment.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setIsDeleteAlertOpen(false)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={handleDeleteComment}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
 }
