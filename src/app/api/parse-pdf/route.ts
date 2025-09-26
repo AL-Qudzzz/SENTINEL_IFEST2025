@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pdf from 'pdf-parse';
+const pdf = require('pdf-parse');
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,13 +10,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File tidak ditemukan.' }, { status: 400 });
     }
 
-    // Ubah file menjadi Buffer untuk diproses oleh pdf-parse
     const buffer = Buffer.from(await file.arrayBuffer());
     
-    // Logika pdf-parse berjalan aman di sini (server-side)
     const data = await pdf(buffer);
 
-    // Kirim kembali teks yang sudah diekstrak
     return NextResponse.json({ text: data.text }, { status: 200 });
 
   } catch (error) {

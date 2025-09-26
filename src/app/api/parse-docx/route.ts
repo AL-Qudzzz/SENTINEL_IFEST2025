@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mammoth from 'mammoth';
+const mammoth = require('mammoth');
 
 export async function POST(request: NextRequest) {
   try {
