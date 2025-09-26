@@ -1,32 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow authenticated users to read and write to their own user document
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Allow authenticated users to read company and department data
-    match /companies/{companyId} {
-      allow read: if request.auth != null;
-    }
-
-    match /departments/{departmentId} {
-      allow read: if request.auth != null;
-    }
     
-    // Rules for the contracts collection and its subcollections
+    // Allow logged-in users to read and write to the 'contracts' collection
+    // and its subcollections.
     match /contracts/{contractId} {
-      // Allow any authenticated user to read (get, list) and write (create, update, delete) contracts.
-      // This is a permissive rule for development. For production, you'd want more granular control,
-      // for example: allow read, write: if request.auth.uid in resource.data.members;
-      allow read, write: if request.auth != null;
+      // Allow reading a single document and the entire collection list
+      allow get, list: if request.auth != null;
 
-      // Allow authenticated users to read and write to subcollections of a contract
+      // Allow creating, updating, and deleting documents
+      allow write: if request.auth != null;
+      
+      // Allow access to subcollections like comments and approvals
       match /{allPaths=**} {
         allow read, write: if request.auth != null;
       }
+    }
+
+    // Default-deny all other access
+    match /{document=**} {
+      allow read, write: if 
+          path[0] == 'contracts' ? request.auth != null :
+          false;
     }
   }
 }
