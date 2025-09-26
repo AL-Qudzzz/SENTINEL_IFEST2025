@@ -2,6 +2,47 @@
 
 Sentinel adalah platform manajemen siklus hidup kontrak cerdas yang dirancang untuk membantu organisasi mengelola, menganalisis, dan mengoptimalkan portofolio kontrak mereka secara proaktif. Dibangun dengan Next.js, Firebase, dan Google AI, Sentinel mengubah dokumen hukum statis menjadi aset data strategis.
 
+## Checklist Fitur SENTINEL
+
+Berikut adalah status pengembangan fitur-fitur utama dalam aplikasi Sentinel.
+
+### Modul Inti: Intelligent Foundation & Lifecycle Sentinel
+- [X] **Pengumpulan Data & Penyimpanan Cerdas**
+  - [X] Formulir digital untuk pengumpulan data melalui dialog unggah.
+  - [X] Teknologi OCR (via text extraction) untuk mengubah kontrak fisik (PDF, DOCX) menjadi aset digital.
+  - [X] Repositori terpusat yang aman (Firebase Firestore) dengan enkripsi.
+- [X] **Ekstraksi Data Cerdas Berbasis AI**
+  - [X] Mesin AI dengan NLP untuk membaca dan memahami dokumen secara otomatis.
+  - [X] Ekstraksi otomatis untuk metadata kunci, tanggal penting, kewajiban, dan metrik kinerja.
+- [X] **Pelacakan Siklus Hidup Otomatis**
+  - [X] Sistem pemantauan proaktif untuk setiap kontrak.
+  - [X] Notifikasi cerdas yang dapat dikonfigurasi (untuk tenggat waktu 10 hari) untuk perpanjangan atau pengakhiran.
+
+### Modul Keamanan: Aegis Risk & Compliance Engine
+- [X] **Deteksi Risiko & Rekomendasi Kebijakan**
+  - [X] Analisis klausul oleh AI terhadap database hukum, regulasi, dan kebijakan internal.
+  - [X] Pemberian skor risiko otomatis.
+  - [X] Penandaan klausul yang ambigu atau tidak standar.
+- [X] **Rekomendasi Klausul Cerdas**
+  - [X] Sistem merekomendasikan formulasi kalimat atau klausul alternatif yang lebih aman.
+
+### Modul Kolaborasi: Synergy Collaboration Hub
+- [X] **Penyusunan & Peninjauan Kontrak Kolaboratif**
+  - [X] Ruang kerja real-time untuk revisi, komentar, dan persetujuan.
+- [X] **Alur Kerja Persetujuan Dinamis**
+  - [X] Alur kerja persetujuan yang fleksibel dan otomatis.
+  - [X] Perutean draf cerdas ke pihak berwenang berdasarkan aturan yang telah ditentukan.
+
+### Modul Analitik: Cortex Analytics & Intelligence
+- [X] **Dashboard Analitik Interaktif**
+  - [X] Visualisasi data performa siklus kontrak (statistik, aktivitas, ringkasan risiko).
+  - [ ] Analisis pengeluaran dan identifikasi *bottleneck* proses.
+- [X] **Pencarian Semantik**
+  - [X] Kemampuan mencari kontrak menggunakan bahasa alami (contoh: "tampilkan semua kontrak yang akan berakhir dalam 6 bulan").
+- [X] **Asisten AI Generatif**
+  - [X] Fitur "Tanya Jawab Kontrak" untuk bertanya langsung pada AI mengenai isi dokumen.
+
+
 ## Project Changelog
 
 Dokumen ini mencatat evolusi, perbaikan bug, dan keputusan arsitektural yang dibuat selama pengembangan aplikasi Sentinel.
