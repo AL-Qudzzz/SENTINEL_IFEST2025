@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ShieldCheck, AlertCircle, FileText } from 'lucide-react';
+import { Loader2, ShieldCheck, AlertCircle, FileText, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { detectContractRisk, type DetectContractRiskOutput } from '@/ai/flows/detect-contract-risk-flow';
 import { Separator } from '@/components/ui/separator';
@@ -183,7 +183,12 @@ export default function RiskAnalysisPage() {
                     <SelectContent>
                       {contracts?.map(contract => (
                         <SelectItem key={contract.id} value={contract.id}>
-                          {contract.title}
+                          <div className="flex items-center gap-2">
+                            {contract.title}
+                            {typeof contract.riskScore === 'number' && (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
