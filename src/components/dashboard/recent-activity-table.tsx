@@ -60,7 +60,7 @@ export function RecentActivityTable() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
-        <Table>
+        <Table wrapperClassName='h-full'>
           <TableHeader>
             <TableRow>
               <TableHead>Contract</TableHead>
