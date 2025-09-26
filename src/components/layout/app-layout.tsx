@@ -122,10 +122,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       isActive={pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true)}
                       tooltip={item.label}
                     >
-                      <a href={item.href}>
+                      <Link href={item.href}>
                         <item.icon />
                         <span>{item.label}</span>
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

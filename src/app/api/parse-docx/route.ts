@@ -1,7 +1,10 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-const mammoth = require('mammoth');
 
 export async function POST(request: NextRequest) {
+  // Lazily import mammoth inside the handler.
+  const mammoth = require('mammoth');
+  
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
