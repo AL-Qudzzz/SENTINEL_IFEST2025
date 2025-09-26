@@ -91,81 +91,83 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         collapsible="icon"
         className="border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
-        <SidebarHeader className="h-16 items-center">
-          <div
-            data-sidebar="header-content"
-            className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0"
-          >
-            <span className="font-headline text-lg font-bold">SENTINEL</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true)}
-                    tooltip={item.label}
-                  >
-                    <a href={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter className="p-2 flex flex-row gap-2 items-center group-data-[collapsible=icon]:flex-col">
-          <NotificationBell />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-12 w-full justify-start gap-2 px-2 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-              >
-                <Avatar className="h-8 w-8">
-                  {userAvatar && (
-                    <Image
-                      src={userAvatar.imageUrl}
-                      alt={userAvatar.description}
-                      width={32}
-                      height={32}
-                      data-ai-hint={userAvatar.imageHint}
-                    />
-                  )}
-                  <AvatarFallback>JD</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:w-0">
-                  <span className="font-medium">Jane Doe</span>
-                  <span className="text-xs text-muted-foreground">
-                    Legal Counsel
-                  </span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <CircleUser className="mr-2" />
-                <span>Profile</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </SidebarFooter>
+        <div className="flex h-full flex-col">
+          <SidebarHeader className="h-16 items-center">
+            <div
+              data-sidebar="header-content"
+              className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0"
+            >
+              <span className="font-headline text-lg font-bold">SENTINEL</span>
+            </div>
+          </SidebarHeader>
+          <SidebarContent className="flex-1">
+            <SidebarGroup>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true)}
+                      tooltip={item.label}
+                    >
+                      <a href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarFooter className="p-2 flex flex-col gap-2 items-center group-data-[collapsible=icon]:flex-col">
+            <NotificationBell />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-12 w-full justify-start gap-2 px-2 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                >
+                  <Avatar className="h-8 w-8">
+                    {userAvatar && (
+                      <Image
+                        src={userAvatar.imageUrl}
+                        alt={userAvatar.description}
+                        width={32}
+                        height={32}
+                        data-ai-hint={userAvatar.imageHint}
+                      />
+                    )}
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:w-0">
+                    <span className="font-medium">Jane Doe</span>
+                    <span className="text-xs text-muted-foreground">
+                      Legal Counsel
+                    </span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <CircleUser className="mr-2" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarFooter>
+        </div>
       </Sidebar>
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
