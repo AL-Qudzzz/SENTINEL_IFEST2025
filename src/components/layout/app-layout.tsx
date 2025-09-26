@@ -96,7 +96,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             data-sidebar="header-content"
             className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0"
           >
-            <Icons.logo className="size-7 shrink-0 text-primary" />
             <span className="font-headline text-lg font-bold">SENTINEL</span>
           </div>
         </SidebarHeader>

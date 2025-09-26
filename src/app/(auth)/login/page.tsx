@@ -73,7 +73,6 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <div className="flex justify-center items-center gap-2 mb-4">
-            <Icons.logo className="size-8 text-primary" />
             <span className="font-headline text-2xl font-bold">SENTINEL</span>
         </div>
         <CardTitle>Welcome Back</CardTitle>

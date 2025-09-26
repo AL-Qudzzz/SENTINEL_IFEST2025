@@ -54,15 +54,27 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  return (
+    <AuthGuard>
+      {isAuthPage ? (
+        children
+      ) : (
+        <AppLayout>{children}</AppLayout>
+      )}
+    </AuthGuard>
+  );
+}
+
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -77,13 +89,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
-           <AuthGuard>
-            {isAuthPage ? (
-              children
-            ) : (
-              <AppLayout>{children}</AppLayout>
-            )}
-          </AuthGuard>
+           <AppContent>{children}</AppContent>
         </FirebaseClientProvider>
         <Toaster />
       </body>
