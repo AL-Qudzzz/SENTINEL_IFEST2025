@@ -28,10 +28,8 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
   SidebarInset,
   SidebarGroup,
-  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -44,7 +42,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import { cn } from '@/lib/utils';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { NotificationBell } from './NotificationBell';
 
@@ -102,7 +99,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <Icons.logo className="size-7 shrink-0 text-primary" />
             <span className="font-headline text-lg font-bold">SENTINEL</span>
           </div>
-          <SidebarTrigger className="group-data-[collapsible=icon]:ml-auto" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
