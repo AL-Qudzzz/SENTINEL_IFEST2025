@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -59,14 +60,15 @@ const approvalWorkflow = [
     step: 'Finance Approval',
     approver: 'John Smith',
     status: 'Pending',
-    avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib=rb-4.1.0&q=80&w=1080',
+    avatar: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NTg3ODg5NzR8MA&ixlib
+-rb-4.1.0&q=80&w=1080',
     initials: 'JS',
   },
   {
     step: 'Executive Sign-off',
     approver: 'Sarah Lee',
     status: 'Waiting',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzU4Nzg4OTc0fDA&ixlib=rb-4.1.0&q=80&w=1080',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cGVyc29uJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzU4Nzg4OTc0fDA&ixlib-rb-4.1.0&q=80&w=1080',
     initials: 'SL',
   },
 ];
@@ -373,7 +375,7 @@ function LoadingSkeleton() {
     )
 }
 
-export default function CollaborationPage({ params: { id } }: { params: { id: string } }) {
+function CollaborationClientPage({ id }: { id: string }) {
     const { firestore } = useFirebase();
 
     const contractRef = useMemoFirebase(
@@ -416,3 +418,9 @@ export default function CollaborationPage({ params: { id } }: { params: { id: st
         </div>
     );
 }
+
+export default function CollaborationPage({ params }: { params: { id: string } }) {
+  return <CollaborationClientPage id={params.id} />;
+}
+
+    
