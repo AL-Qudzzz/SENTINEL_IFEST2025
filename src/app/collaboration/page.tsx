@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { collection, query, orderBy } from 'firebase/firestore';
 import {
   Card,
@@ -20,11 +20,12 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users } from 'lucide-react';
+import { Users, Search } from 'lucide-react';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import type { Contract, Status } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
 
 const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
@@ -37,6 +38,7 @@ const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive'
 
 export default function CollaborationHubPage() {
   const { firestore } = useFirebase();
+  const [searchTerm, setSearchTerm] = useState('');
 
   const contractsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -44,6 +46,14 @@ export default function CollaborationHubPage() {
   }, [firestore]);
 
   const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
+
+  const filteredContracts = useMemo(() => {
+    if (!contracts) return [];
+    if (!searchTerm) return contracts;
+    return contracts.filter(contract =>
+      contract.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [contracts, searchTerm]);
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -58,11 +68,22 @@ export default function CollaborationHubPage() {
 
       <main className="flex flex-1 flex-col">
         <Card>
-          <CardHeader>
-            <CardTitle>Contract Workflows</CardTitle>
-            <CardDescription>
-              Overview of all contracts currently in the collaboration and approval pipeline.
-            </CardDescription>
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Contract Workflows</CardTitle>
+              <CardDescription>
+                Overview of all contracts currently in the collaboration and approval pipeline.
+              </CardDescription>
+            </div>
+            <div className="relative w-full sm:w-auto sm:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by title..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -83,7 +104,7 @@ export default function CollaborationHubPage() {
                     <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                   </TableRow>
                 ))}
-                {!isLoading && contracts?.map((contract) => {
+                {!isLoading && filteredContracts.map((contract) => {
                     return (
                       <TableRow key={contract.id}>
                         <TableCell className="font-medium">{contract.title}</TableCell>
@@ -104,10 +125,10 @@ export default function CollaborationHubPage() {
                       </TableRow>
                     );
                 })}
-                {!isLoading && contracts?.length === 0 && (
+                {!isLoading && filteredContracts.length === 0 && (
                    <TableRow>
                      <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                       No contracts available for collaboration.
+                       No contracts found.
                      </TableCell>
                    </TableRow>
                 )}
