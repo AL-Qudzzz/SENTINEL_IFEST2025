@@ -1,6 +1,8 @@
 
 'use client';
 import { useState } from 'react';
+import mammoth from 'mammoth';
+import pdfParse from 'pdf-parse';
 import {
   Dialog,
   DialogContent,
@@ -24,12 +26,19 @@ import { collection, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
+// Conditional import for pdf-parse worker
+if (typeof window !== 'undefined') {
+  (window as any).pdfjsWorker = import('pdfjs-dist/build/pdf.worker.min.mjs');
+}
+
+
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [contractText, setContractText] = useState('');
   const [fileType, setFileType] = useState('');
   const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ExtractContractDataOutput | null>(null);
 
@@ -40,40 +49,76 @@ export function UploadContractDialog() {
     setContractText('');
     setFileName('');
     setIsLoading(false);
+    setIsParsing(false);
     setError(null);
     setResult(null);
     setFileType('');
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-      setFileType(file.type);
-      setResult(null);
-      setError(null);
+    if (!file) return;
+
+    resetState();
+    setFileName(file.name);
+    setFileType(file.type);
+    setIsParsing(true);
+
+    try {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        setContractText(text);
-      };
-      reader.onerror = (e) => {
-        setError('Failed to read file.');
-        console.error('FileReader error:', e);
-      };
-      
-      if (file.type.startsWith('text/')) {
+
+      if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') { // DOCX
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            const textResult = await mammoth.extractRawText({ arrayBuffer });
+            setContractText(textResult.value);
+            setError(null);
+          } catch (err) {
+            console.error('Error parsing DOCX file:', err);
+            setError('Failed to parse DOCX file. It might be corrupted or in an unsupported format.');
+          } finally {
+            setIsParsing(false);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (file.type === 'application/pdf') { // PDF
+        reader.onload = async (e) => {
+          try {
+            const arrayBuffer = e.target?.result as ArrayBuffer;
+            const data = await pdfParse(arrayBuffer);
+            setContractText(data.text);
+            setError(null);
+          } catch (err) {
+            console.error('Error parsing PDF file:', err);
+            setError('Failed to parse PDF file. It might be encrypted or corrupted.');
+          } finally {
+            setIsParsing(false);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (file.type.startsWith('text/')) { // TXT
+        reader.onload = (e) => {
+          setContractText(e.target?.result as string);
+          setError(null);
+          setIsParsing(false);
+        };
         reader.readAsText(file);
       } else {
-        setContractText(''); // Clear text if not a text file
-        setError('File uploaded, but AI analysis is only supported for .txt files at this time.');
+        setError('Unsupported file type. Please upload a DOCX, PDF, or TXT file.');
+        setIsParsing(false);
       }
+    } catch (err) {
+      console.error('File handling error:', err);
+      setError('An unexpected error occurred while handling the file.');
+      setIsParsing(false);
     }
   };
 
+
   const handleAnalyze = async () => {
     if (!contractText) {
-      setError('Please upload a .txt contract file to analyze.');
+      setError('Document text could not be extracted. Please upload a valid DOCX, PDF or .txt file to analyze.');
       return;
     }
     setIsLoading(true);
@@ -172,7 +217,7 @@ export function UploadContractDialog() {
                 <p className="mb-2 text-sm text-muted-foreground">
                   <span className="font-semibold">Click to upload</span> or drag and drop
                 </p>
-                <p className="text-xs text-muted-foreground">TXT, PDF, or DOC files</p>
+                <p className="text-xs text-muted-foreground">TXT, PDF, or DOCX files</p>
                 {fileName && (
                   <p className="mt-2 text-sm font-medium text-primary">{fileName}</p>
                 )}
@@ -180,11 +225,18 @@ export function UploadContractDialog() {
               <Input id="file-upload-dialog" type="file" className="hidden" onChange={handleFileChange} accept=".txt,.pdf,.doc,.docx" />
             </Label>
           </div>
+          
+          {isParsing && (
+              <div className="flex items-center justify-center p-4 text-muted-foreground">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span>Parsing document...</span>
+              </div>
+          )}
 
           {error && (
-            <Alert variant={error.includes('only supported for .txt') ? 'default' : 'destructive'} className={error.includes('only supported for .txt') ? 'border-yellow-500/50 text-yellow-600 [&>svg]:text-yellow-600 dark:border-yellow-500/50 dark:text-yellow-500 dark:[&>svg]:text-yellow-500' : ''}>
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{error.includes('only supported for .txt') ? 'Note' : 'Error'}</AlertTitle>
+              <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -232,7 +284,7 @@ export function UploadContractDialog() {
           {result ? (
              <Button onClick={handleSaveContract}>Save Contract</Button>
           ) : (
-            <Button onClick={handleAnalyze} disabled={isLoading || !contractText}>
+            <Button onClick={handleAnalyze} disabled={isLoading || isParsing || !contractText}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
