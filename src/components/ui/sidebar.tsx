@@ -161,7 +161,7 @@ const Sidebar = React.forwardRef<
         )}
         {...props}
       >
-        <div className="fixed top-0 left-0 h-full w-inherit flex flex-col">{children}</div>
+        <div className="h-full w-full flex flex-col">{children}</div>
       </div>
     )
   }
@@ -389,7 +389,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-hover/sidebar:justify-start [&:not(.group-hover/sidebar)]:justify-center [&>span]:truncate [&>span]:opacity-0 [&>span]:transition-opacity group-hover/sidebar:[&>span]:opacity-100 [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-hover/sidebar:justify-start [&:not(.group-hover/sidebar)]:justify-center [&>span]:truncate [&>span]:opacity-0 [&>span]:transition-opacity group-hover/sidebar:[&>span]:opacity-100 [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -634,6 +634,7 @@ export {
 }
 
     
+
 
 
 
