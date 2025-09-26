@@ -22,7 +22,11 @@ export type ExtractContractDataInput = z.infer<typeof ExtractContractDataInputSc
 
 const ExtractContractDataOutputSchema = z.object({
   metadata: z
-    .record(z.string())
+    .object({
+      contractType: z.string().describe('The type of contract, e.g., "Master Service Agreement", "NDA".'),
+      partiesInvolved: z.string().describe('The names of the parties involved in the contract, separated by commas.'),
+      contractValue: z.string().describe('The total monetary value of the contract. Should include currency.'),
+    })
     .describe('Key metadata of the contract, such as contract type, parties involved, and contract value.'),
   importantDates: z
     .array(z.object({dateType: z.string(), date: z.string()}))
@@ -31,7 +35,9 @@ const ExtractContractDataOutputSchema = z.object({
     .array(z.string())
     .describe('Key obligations of each party involved in the contract.'),
   performanceMetrics: z
-    .record(z.string())
+    .object({
+      sla: z.string().describe('Key Service Level Agreements (SLAs) mentioned in the contract.')
+    })
     .describe('Performance metrics defined in the contract.'),
 });
 export type ExtractContractDataOutput = z.infer<typeof ExtractContractDataOutputSchema>;
@@ -50,13 +56,13 @@ const extractContractDataPrompt = ai.definePrompt({
   - Metadata: Key metadata of the contract, such as contract type, parties involved, and contract value.
   - Important Dates: Important dates in the contract, such as effective date, renewal date, and termination date. Represent each date with its type and the date itself.
   - Obligations: Key obligations of each party involved in the contract.
-  - Performance Metrics: Performance metrics defined in the contract.
+  - Performance Metrics: Key Service Level Agreements (SLAs) defined in the contract.
 
   Contract Text:
   {{contractText}}
 
   Make sure the JSON is valid and all fields are populated if available in the contract text.
-  If a particular piece of data is not present, set its value to null, but do not omit the field.
+  If a particular piece of data is not present, provide a reasonable empty or null value for its field, but do not omit the field.
   `,
 });
 
