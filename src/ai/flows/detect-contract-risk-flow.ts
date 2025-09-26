@@ -17,10 +17,10 @@ const DetectContractRiskInputSchema = z.object({
 export type DetectContractRiskInput = z.infer<typeof DetectContractRiskInputSchema>;
 
 const DetectContractRiskOutputSchema = z.object({
-  riskScore: z.number().describe('A numerical score indicating the risk level of the clause (0-100).'),
-  riskFactors: z.array(z.string()).describe('Specific risk factors identified in the clause.'),
-  suggestedAlternative: z.string().describe('A suggested alternative wording for the clause to mitigate identified risks.'),
-  rationale: z.string().describe('Explanation of why the clause is risky and why the suggested alternative is safer.'),
+  riskScore: z.number().describe('Skor numerik yang menunjukkan tingkat risiko klausul (0-100).'),
+  riskFactors: z.array(z.string()).describe('Faktor-faktor risiko spesifik yang diidentifikasi dalam klausul.'),
+  suggestedAlternative: z.string().describe('Saran rumusan alternatif untuk klausul guna memitigasi risiko yang teridentifikasi.'),
+  rationale: z.string().describe('Penjelasan mengapa klausul tersebut berisiko dan mengapa alternatif yang disarankan lebih aman.'),
 });
 export type DetectContractRiskOutput = z.infer<typeof DetectContractRiskOutputSchema>;
 
@@ -32,13 +32,13 @@ const detectContractRiskPrompt = ai.definePrompt({
   name: 'detectContractRiskPrompt',
   input: {schema: DetectContractRiskInputSchema},
   output: {schema: DetectContractRiskOutputSchema},
-  prompt: `You are an AI specializing in legal contract risk assessment.
+  prompt: `Anda adalah AI yang berspesialisasi dalam penilaian risiko kontrak hukum.
 
-  Analyze the following contract clause and provide a risk score, identify risk factors, suggest an alternative wording, and provide a rationale for your assessment.
+  Analisis klausul kontrak berikut dan berikan skor risiko, identifikasi faktor-faktor risiko, sarankan rumusan alternatif, dan berikan alasan untuk penilaian Anda. SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA.
 
-  Clause Text: {{{clauseText}}}
+  Teks Klausul: {{{clauseText}}}
 
-  Respond in a structured JSON format matching the schema description.  The riskScore should be between 0 and 100.  The riskFactors should be specific and actionable. The suggestedAlternative should be a complete replacement for the Clause Text. The rationale should be clear and concise.
+  Tanggapi dalam format JSON terstruktur yang cocok dengan deskripsi skema. riskScore harus antara 0 dan 100. riskFactors harus spesifik dan dapat ditindaklanjuti. suggestedAlternative harus menjadi pengganti lengkap untuk Teks Klausul. rationale harus jelas dan ringkas.
   `,
 });
 
