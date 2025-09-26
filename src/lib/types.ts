@@ -8,9 +8,7 @@ export type Status =
   | 'Expired' 
   | 'Pending Renewal' 
   | 'Terminated'
-  | 'Legal Review'
-  | 'Finance Approval'
-  | 'Executive Sign-off';
+  | 'Pending Approval';
 
 
 export interface Contract {

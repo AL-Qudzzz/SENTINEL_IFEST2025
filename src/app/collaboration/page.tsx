@@ -33,9 +33,7 @@ const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive'
   'Expired': 'destructive',
   'Pending Renewal': 'default',
   'Terminated': 'destructive',
-  'Legal Review': 'secondary',
-  'Finance Approval': 'secondary',
-  'Executive Sign-off': 'default',
+  'Pending Approval': 'secondary',
 };
 
 export default function CollaborationHubPage() {

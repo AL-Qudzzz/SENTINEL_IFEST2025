@@ -55,7 +55,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
-import type { Contract, ContractComment, ApprovalStep, ApprovalStatus } from '@/lib/types';
+import type { Contract, ContractComment, ApprovalStep, ApprovalStatus, Status } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
@@ -426,12 +426,12 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 const nextStepRef = doc(firestore, 'contracts', contractId, 'approvals', nextStep.id);
                 batch.update(nextStepRef, { status: 'Pending' as ApprovalStatus });
 
-                // 3. Update the main contract status
-                batch.update(contractRef, { status: nextStep.stepName, updatedAt: serverTimestamp() });
+                // 3. Update the main contract status to 'Pending Approval'
+                batch.update(contractRef, { status: 'Pending Approval' as Status, updatedAt: serverTimestamp() });
 
             } else {
                 // This was the final step, mark contract as Active
-                batch.update(contractRef, { status: 'Active', updatedAt: serverTimestamp() });
+                batch.update(contractRef, { status: 'Active' as Status, updatedAt: serverTimestamp() });
             }
 
             await batch.commit();

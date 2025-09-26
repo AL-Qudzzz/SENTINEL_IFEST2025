@@ -47,9 +47,7 @@ const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'o
   'Expired': 'destructive',
   'Pending Renewal': 'default',
   'Terminated': 'destructive',
-  'Legal Review': 'secondary',
-  'Finance Approval': 'secondary',
-  'Executive Sign-off': 'default',
+  'Pending Approval': 'secondary',
 };
 
 const getRiskVariant = (score?: number): "destructive" | "secondary" | "default" => {
@@ -59,7 +57,7 @@ const getRiskVariant = (score?: number): "destructive" | "secondary" | "default"
   return 'default';
 };
 
-const contractStatuses: Status[] = ['Active', 'In Review', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated', 'Legal Review', 'Finance Approval', 'Executive Sign-off'];
+const contractStatuses: Status[] = ['Active', 'In Review', 'Drafting', 'Expired', 'Pending Renewal', 'Terminated', 'Pending Approval'];
 
 export default function ContractsPage() {
   const { firestore } = useFirebase();
