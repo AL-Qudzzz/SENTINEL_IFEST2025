@@ -3,16 +3,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow public read access to contracts
-    match /contracts/{contractId} {
+    match /contracts/{document=**} {
       allow read: if true;
-      allow write: if request.auth != null; // Only authenticated users can write
-    }
-
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
+      allow create: if true;
+      allow update, delete: if false; // Keep update and delete restricted for now
     }
   }
 }
