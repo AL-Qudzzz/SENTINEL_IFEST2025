@@ -26,16 +26,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [auth, user, isUserLoading]);
 
-  // While checking user status, you might want to show a loader
+  // While checking user status, show a loader and do not render children.
+  // This prevents child components from making unauthenticated Firestore requests.
   if (isUserLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <p>Loading...</p>
+        <p>Authenticating...</p>
       </div>
     );
   }
 
-  // Once loading is complete, render the children.
+  // Once loading is complete and user status is known, render the children.
   return <>{children}</>;
 }
 
