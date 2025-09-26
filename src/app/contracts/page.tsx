@@ -45,8 +45,8 @@ const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'o
   'Drafting': 'outline',
   'Expired': 'destructive',
   'Pending Renewal': 'default',
-  'Terminated': 'destructive',
   'Pending Approval': 'secondary',
+  'Terminated': 'destructive',
 };
 
 const getRiskVariant = (score?: number): "destructive" | "secondary" | "default" | "outline" => {
@@ -78,12 +78,9 @@ export default function ContractsPage() {
 
   const { data: contracts, isLoading } = useCollection<Contract>(contractsQuery);
 
-  const filteredContracts = useMemo(() => {
-    if (!contracts) return [];
-    return contracts.filter(contract =>
-      contract.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [contracts, searchTerm]);
+  const filteredContracts = contracts?.filter(contract =>
+    contract.title.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   const formatDate = (date: any) => {
     if (!date) return 'N/A';
