@@ -393,9 +393,9 @@ export default function CollaborationPage({ params: { id } }: { params: { id: st
                 <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
                     Synergy Collaboration Hub
                 </h1>
-                <p className="text-muted-foreground">
+                <div className="text-muted-foreground">
                     {isLoading ? <Skeleton className="h-4 w-64 mt-1"/> : `Collaborating on: ${contract?.title ?? 'contract'}`}
-                </p>
+                </div>
             </div>
         </header>
 
@@ -416,5 +416,3 @@ export default function CollaborationPage({ params: { id } }: { params: { id: st
         </div>
     );
 }
-
-    
