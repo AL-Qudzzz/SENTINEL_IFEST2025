@@ -1,28 +1,14 @@
+
 'use server';
 /**
  * @fileOverview An AI agent to redraft a contract based on risk analysis feedback.
  *
  * - draftContract - A function that takes an original contract and risk analysis results to produce a revised draft.
- * - DraftContractInput - The input type for the draftContract function.
- * - DraftContractOutput - The return type for the draftContract function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import { DetectContractRiskOutputSchema } from './detect-contract-risk-flow';
-
-
-export const DraftContractInputSchema = z.object({
-  originalContractText: z.string().describe('The full original text of the contract to be redrafted.'),
-  riskAnalysis: DetectContractRiskOutputSchema.describe('The results from the detectContractRisk flow, including risk factors and suggested alternatives.'),
-});
-export type DraftContractInput = z.infer<typeof DraftContractInputSchema>;
-
-export const DraftContractOutputSchema = z.object({
-  redraftedContractText: z.string().describe('The full text of the redrafted contract, incorporating the suggested revisions.'),
-});
-export type DraftContractOutput = z.infer<typeof DraftContractOutputSchema>;
-
+import type { DraftContractInput, DraftContractOutput } from './schemas';
+import { DraftContractInputSchema, DraftContractOutputSchema } from './schemas';
 
 export async function draftContract(input: DraftContractInput): Promise<DraftContractOutput> {
   return draftContractFlow(input);
