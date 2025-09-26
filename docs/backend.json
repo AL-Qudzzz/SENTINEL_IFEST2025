@@ -1,0 +1,403 @@
+{
+  "entities": {
+    "Contract": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contract",
+      "type": "object",
+      "description": "Represents a legal contract document and its associated metadata.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Contract entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title or name of the contract."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief summary or description of the contract's purpose."
+        },
+        "documentId": {
+          "type": "string",
+          "description": "Reference to the Document entity, pointing to the contract's full text. (Relationship: Contract 1:1 Document)"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the contract (e.g., 'Draft', 'Active', 'Expired', 'Terminated')."
+        },
+        "effectiveDate": {
+          "type": "string",
+          "description": "The date on which the contract becomes effective.",
+          "format": "date-time"
+        },
+        "expirationDate": {
+          "type": "string",
+          "description": "The date on which the contract expires.",
+          "format": "date-time"
+        },
+        "renewalDate": {
+          "type": "string",
+          "description": "The date on which the contract is up for renewal.",
+          "format": "date-time"
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company involved in the contract. (Relationship: Company 1:N Contract)"
+        },
+        "departmentId": {
+          "type": "string",
+          "description": "Reference to the Department responsible for the contract. (Relationship: Department 1:N Contract)"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "documentId",
+        "status",
+        "effectiveDate",
+        "expirationDate",
+        "companyId",
+        "departmentId"
+      ]
+    },
+    "Document": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Document",
+      "type": "object",
+      "description": "Represents the full text content of a contract document.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Document entity."
+        },
+        "content": {
+          "type": "string",
+          "description": "The full text content of the contract document."
+        },
+        "fileType": {
+          "type": "string",
+          "description": "The file type of the document (e.g., 'pdf', 'docx', 'txt')."
+        },
+        "uploadDate": {
+          "type": "string",
+          "description": "The date and time when the document was uploaded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "content",
+        "fileType",
+        "uploadDate"
+      ]
+    },
+    "Company": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Company",
+      "type": "object",
+      "description": "Represents a company that is a party to a contract.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Company entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the company."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the company."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "The contact email address for the company.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "address",
+        "contactEmail"
+      ]
+    },
+    "Department": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Department",
+      "type": "object",
+      "description": "Represents a department within the organization that manages contracts.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Department entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the department."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the department's role and responsibilities."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Notification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a notification related to a contract event (e.g., renewal, expiration).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Notification entity."
+        },
+        "contractId": {
+          "type": "string",
+          "description": "Reference to the Contract to which this notification belongs. (Relationship: Contract 1:N Notification)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of notification (e.g., 'Renewal', 'Expiration', 'Obligation')."
+        },
+        "triggerDate": {
+          "type": "string",
+          "description": "The date on which the notification should be triggered.",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string",
+          "description": "The message content of the notification."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the notification (e.g., 'Pending', 'Sent', 'Read')."
+        }
+      },
+      "required": [
+        "id",
+        "contractId",
+        "type",
+        "triggerDate",
+        "message",
+        "status"
+      ]
+    },
+    "ClauseRiskAssessment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ClauseRiskAssessment",
+      "type": "object",
+      "description": "Represents the risk assessment of a specific clause within a contract.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ClauseRiskAssessment entity."
+        },
+        "contractId": {
+          "type": "string",
+          "description": "Reference to the Contract to which this assessment belongs. (Relationship: Contract 1:N ClauseRiskAssessment)"
+        },
+        "clauseText": {
+          "type": "string",
+          "description": "The text of the clause being assessed."
+        },
+        "riskScore": {
+          "type": "number",
+          "description": "The risk score assigned to the clause (e.g., 0-100)."
+        },
+        "riskFactors": {
+          "type": "string",
+          "description": "A description of the factors contributing to the risk score."
+        },
+        "recommendation": {
+          "type": "string",
+          "description": "A recommendation for mitigating the risk associated with the clause."
+        }
+      },
+      "required": [
+        "id",
+        "contractId",
+        "clauseText",
+        "riskScore",
+        "riskFactors",
+        "recommendation"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Sentinel application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "departmentId": {
+          "type": "string",
+          "description": "Reference to the Department the user belongs to. (Relationship: Department 1:N User)"
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "departmentId"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles.  Authorization is based on path ownership (user can only access their own profile).",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}",
+        "definition": {
+          "entityName": "Company",
+          "schema": {
+            "$ref": "#/backend/entities/Company"
+          },
+          "description": "Stores company information. Access control might be role-based (e.g., admin can access all companies).",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier of the company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/departments/{departmentId}",
+        "definition": {
+          "entityName": "Department",
+          "schema": {
+            "$ref": "#/backend/entities/Department"
+          },
+          "description": "Stores department information. Access control might be role-based (e.g., department head can access the department).",
+          "params": [
+            {
+              "name": "departmentId",
+              "description": "The unique identifier of the department."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/contracts/{contractId}",
+        "definition": {
+          "entityName": "Contract",
+          "schema": {
+            "$ref": "#/backend/entities/Contract"
+          },
+          "description": "Stores contract metadata.  Denormalized fields may include company ID, department ID, and a membership map (`members`) for collaborative access.",
+          "params": [
+            {
+              "name": "contractId",
+              "description": "The unique identifier of the contract."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/contracts/{contractId}/documents/{documentId}",
+        "definition": {
+          "entityName": "Document",
+          "schema": {
+            "$ref": "#/backend/entities/Document"
+          },
+          "description": "Stores the actual contract documents associated with a contract. Access controlled by the parent contract's `members` map.",
+          "params": [
+            {
+              "name": "contractId",
+              "description": "The unique identifier of the contract."
+            },
+            {
+              "name": "documentId",
+              "description": "The unique identifier of the document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/contracts/{contractId}/notifications/{notificationId}",
+        "definition": {
+          "entityName": "Notification",
+          "schema": {
+            "$ref": "#/backend/entities/Notification"
+          },
+          "description": "Stores notifications related to a specific contract.  Includes denormalized data from the parent `contract` for authorization independence.",
+          "params": [
+            {
+              "name": "contractId",
+              "description": "The unique identifier of the contract."
+            },
+            {
+              "name": "notificationId",
+              "description": "The unique identifier of the notification."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/contracts/{contractId}/clauseRiskAssessments/{clauseRiskAssessmentId}",
+        "definition": {
+          "entityName": "ClauseRiskAssessment",
+          "schema": {
+            "$ref": "#/backend/entities/ClauseRiskAssessment"
+          },
+          "description": "Stores risk assessments for clauses within a specific contract. Includes denormalized data from the parent `contract` for authorization independence.",
+          "params": [
+            {
+              "name": "contractId",
+              "description": "The unique identifier of the contract."
+            },
+            {
+              "name": "clauseRiskAssessmentId",
+              "description": "The unique identifier of the clause risk assessment."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide a secure, scalable, and easily maintainable system for managing contracts. It leverages denormalization to achieve authorization independence and structural segregation to simplify security rules. User data is stored under `/users/{userId}`. Companies and Departments are stored in top-level collections, as are Contracts. Contract documents are stored in the `documents` subcollection of the `contracts` collection. Notifications and Risk Assessments are kept as subcollections of Contracts, with each document containing a denormalized copy of relevant contract data. This design enables efficient querying and avoids the need for complex `get()` calls in security rules, ensuring that authorization can be performed independently at each document level. Specifically, the design supports QAPs by segregating data with different access needs into distinct collections and subcollections and by denormalizing authorization data to prevent rules from acting as filters."
+  }
+}
