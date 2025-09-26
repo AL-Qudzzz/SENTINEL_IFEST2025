@@ -67,7 +67,7 @@ export default function ProfilePage() {
       });
       setLocalPhotoURL(appUser.photoURL);
     }
-  }, [appUser, isEditing, form]);
+  }, [appUser, isEditing]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -93,67 +93,71 @@ export default function ProfilePage() {
 
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user || !firestore || !storage) {
-      toast({ variant: "destructive", title: "Error", description: "Services not available. Please try again later." });
-      return;
+        toast({ variant: "destructive", title: "Error", description: "Services not available. Please try again later." });
+        return;
     }
-    
     setIsSubmitting(true);
-    
+
     try {
-      let photoURL = appUser?.photoURL; // Start with the existing photo URL
-
-      // Step 1: If a new photo file is selected, upload it first.
-      if (photoFile) {
-        try {
-          photoURL = await uploadPhoto(photoFile);
-        } catch (uploadError) {
-          console.error("Photo upload failed:", uploadError);
-          toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload your new profile picture." });
-          setIsSubmitting(false);
-          return; // Stop the process if upload fails
+        let newPhotoURL: string | null = null;
+        // Step 1: Upload new photo if it exists
+        if (photoFile) {
+            try {
+                newPhotoURL = await uploadPhoto(photoFile);
+            } catch (uploadError) {
+                console.error("Photo upload failed:", uploadError);
+                toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload your new profile picture." });
+                setIsSubmitting(false);
+                return;
+            }
         }
-      }
 
-      // Step 2: Prepare data for updates
-      const updateData = {
-        displayName: data.displayName,
-        username: data.username,
-        telephone: data.telephone,
-        photoURL: photoURL,
-        updatedAt: serverTimestamp(),
-      };
-      
-      const authUpdateData = {
-        displayName: data.displayName,
-        photoURL: photoURL,
-      };
+        // Step 2: Prepare data for Firestore and Auth updates
+        const firestoreUpdateData: { [key: string]: any } = {
+            displayName: data.displayName,
+            username: data.username,
+            telephone: data.telephone,
+            updatedAt: serverTimestamp(),
+        };
 
-      // Step 3: Update Auth and Firestore
-      const userDocRef = doc(firestore, 'users', user.uid);
-      await Promise.all([
-        updateAuthProfile(user, authUpdateData),
-        updateDoc(userDocRef, updateData)
-      ]);
+        const authUpdateData: { displayName: string; photoURL?: string | null } = {
+            displayName: data.displayName,
+        };
 
-      // Step 4: Success state updates
-      setPhotoFile(null); // Clear the uploaded file
-      setIsEditing(false); // Exit edit mode
-      toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been saved successfully.',
-      });
+        if (newPhotoURL) {
+            firestoreUpdateData.photoURL = newPhotoURL;
+            authUpdateData.photoURL = newPhotoURL;
+        } else {
+            // Ensure we don't send `undefined`
+            authUpdateData.photoURL = appUser?.photoURL || null;
+        }
+
+        // Step 3: Execute updates
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await Promise.all([
+            updateAuthProfile(user, authUpdateData),
+            updateDoc(userDocRef, firestoreUpdateData)
+        ]);
+        
+        // Step 4: Success state updates
+        setPhotoFile(null); // Clear the uploaded file
+        setIsEditing(false); // Exit edit mode
+        toast({
+            title: 'Profile Updated',
+            description: 'Your profile has been saved successfully.',
+        });
 
     } catch (error) {
-      console.error("Profile update failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Update Failed",
-        description: "An unexpected error occurred while saving your profile.",
-      });
+        console.error("Profile update failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "An unexpected error occurred while saving your profile.",
+        });
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
-  };
+};
   
   const handlePasswordReset = async () => {
     if (!user?.email) return;
