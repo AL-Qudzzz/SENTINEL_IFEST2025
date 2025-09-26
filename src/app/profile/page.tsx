@@ -10,7 +10,7 @@ import { updateProfile, sendPasswordResetEmail, deleteUser, signOut } from 'fire
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase, Pencil, LogOut } from 'lucide-react';
+import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase, Pencil, LogOut, Edit } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +45,7 @@ export default function ProfilePage() {
   const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [localPhotoURL, setLocalPhotoURL] = useState<string | undefined>(undefined);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -139,6 +140,7 @@ export default function ProfilePage() {
       
       setLocalPhotoURL(newPhotoURL);
       setPhotoFile(null); // Clear the file state after successful submission
+      setIsEditing(false); // Exit edit mode
 
       toast({
         title: 'Profile Updated',
@@ -243,7 +245,9 @@ export default function ProfilePage() {
                                       onChange={handleFileChange}
                                       className="hidden"
                                       accept="image/png, image/jpeg, image/gif"
+                                      disabled={!isEditing}
                                     />
+                                    {isEditing && (
                                     <Button
                                       type="button"
                                       variant="outline"
@@ -255,6 +259,7 @@ export default function ProfilePage() {
                                         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4"/>}
                                         <span className="sr-only">Edit picture</span>
                                     </Button>
+                                    )}
                                 </div>
                                 <div className='flex-1 space-y-2'>
                                     <Label>Email</Label>
@@ -269,7 +274,7 @@ export default function ProfilePage() {
                                         <FormItem>
                                             <Label>Display Name</Label>
                                             <FormControl>
-                                                <Input placeholder="Jane Doe" {...field} />
+                                                <Input placeholder="Jane Doe" {...field} readOnly={!isEditing} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -282,7 +287,7 @@ export default function ProfilePage() {
                                         <FormItem>
                                             <Label>Username</Label>
                                             <FormControl>
-                                                <Input placeholder="janedoe" {...field} />
+                                                <Input placeholder="janedoe" {...field} readOnly={!isEditing} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -297,7 +302,7 @@ export default function ProfilePage() {
                                         <FormItem>
                                             <Label className="flex items-center gap-2"><Phone size={14}/> Telephone</Label>
                                             <FormControl>
-                                                <Input type="tel" placeholder="08123456789" {...field} />
+                                                <Input type="tel" placeholder="08123456789" {...field} readOnly={!isEditing} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -308,11 +313,35 @@ export default function ProfilePage() {
                                     <Input value={appUser?.role || 'N/A'} disabled />
                                 </div>
                             </div>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <Save className="mr-2"/>
-                                Save Changes
-                            </Button>
+                            
+                            <div className="flex gap-2">
+                                {isEditing ? (
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        <Save className="mr-2"/>
+                                        Save Changes
+                                    </Button>
+                                ) : (
+                                    <Button type="button" onClick={() => setIsEditing(true)}>
+                                        <Edit className="mr-2"/>
+                                        Edit Profile
+                                    </Button>
+                                )}
+                                {isEditing && (
+                                     <Button variant="ghost" onClick={() => {
+                                         setIsEditing(false);
+                                         form.reset({
+                                             displayName: appUser.displayName,
+                                             username: appUser.username,
+                                             telephone: appUser.telephone,
+                                         });
+                                         setLocalPhotoURL(appUser.photoURL);
+                                         setPhotoFile(null);
+                                     }}>
+                                         Cancel
+                                     </Button>
+                                )}
+                           </div>
                         </form>
                     </Form>
                 </CardContent>
