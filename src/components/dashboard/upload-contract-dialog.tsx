@@ -59,13 +59,12 @@ export function UploadContractDialog() {
         setError('Failed to read file.');
         console.error('FileReader error:', e);
       };
-      // For now, we only support text files for demo purposes.
-      // For other file types, we allow upload but show a warning.
+      
       if (file.type.startsWith('text/')) {
         reader.readAsText(file);
       } else {
-        setError('File uploaded, but analysis is only supported for .txt files at this time.');
         setContractText(''); // Clear text if not a text file
+        setError('File uploaded, but analysis is only supported for .txt files at this time.');
       }
     }
   };
@@ -251,3 +250,5 @@ function InfoItem({ icon: Icon, label, value }: { icon: React.ElementType, label
     </div>
   )
 }
+
+    
