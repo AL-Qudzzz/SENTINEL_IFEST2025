@@ -203,8 +203,7 @@ function LoadingSkeleton() {
   )
 }
 
-export default function ContractDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function ContractDetailPage({ params: { id } }: { params: { id: string } }) {
   const { firestore } = useFirebase();
 
   const contractRef = useMemoFirebase(
