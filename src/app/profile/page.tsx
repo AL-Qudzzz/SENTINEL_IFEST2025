@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -6,8 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
-import { updateProfile, sendPasswordResetEmail, deleteUser, signOut } from 'firebase/auth';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { updateProfile as updateAuthProfile, sendPasswordResetEmail, deleteUser, signOut } from 'firebase/auth';
+import { doc, updateDoc, serverTimestamp, deleteDoc as deleteFirestoreDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Loader2, User, Bell, Shield, Trash2, Save, Phone, Briefcase, Pencil, LogOut, Edit } from 'lucide-react';
@@ -68,7 +67,7 @@ export default function ProfilePage() {
       });
       setLocalPhotoURL(appUser.photoURL);
     }
-  }, [appUser, form]);
+  }, [appUser, form, isEditing]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -80,78 +79,79 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpload = async (file: File): Promise<string | null> => {
-    if (!user || !storage) return null;
+  const uploadPhoto = async (file: File): Promise<string> => {
+    if (!user || !storage) {
+        throw new Error("User or storage service not available.");
+    }
     
     const fileExtension = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExtension}`;
     const storageRef = ref(storage, `profile-pictures/${user.uid}/${fileName}`);
 
-    try {
-      await uploadBytes(storageRef, file);
-      const photoURL = await getDownloadURL(storageRef);
-      return photoURL;
-
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Upload Failed',
-        description: 'Could not upload your profile picture. Please try again.',
-      });
-      return null;
-    }
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
   };
 
 
   const onSubmit = async (data: ProfileFormValues) => {
-    if (!user || !firestore || !appUser) return;
+    if (!user || !firestore) {
+      toast({ variant: "destructive", title: "Error", description: "Not authenticated. Please log in." });
+      return;
+    }
+    
     setIsSubmitting(true);
     
-    let newPhotoURL = appUser.photoURL;
-
-    if (photoFile) {
-        const uploadedUrl = await handleUpload(photoFile);
-        if (uploadedUrl) {
-            newPhotoURL = uploadedUrl;
-        } else {
-            // If upload fails, stop the submission process
-            setIsSubmitting(false);
-            return;
-        }
-    }
-
     try {
-      // Update Auth profile
-      await updateProfile(user, { 
-          displayName: data.displayName,
-          photoURL: newPhotoURL,
-      });
-      
-      // Update Firestore document
-      const userRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userRef, {
+      let photoURL = appUser?.photoURL; // Start with the existing photo URL
+
+      // Step 1: If a new photo file is selected, upload it first.
+      if (photoFile) {
+        try {
+          photoURL = await uploadPhoto(photoFile);
+        } catch (uploadError) {
+          console.error("Photo upload failed:", uploadError);
+          toast({ variant: "destructive", title: "Upload Failed", description: "Could not upload your new profile picture." });
+          setIsSubmitting(false);
+          return; // Stop the process if upload fails
+        }
+      }
+
+      // Step 2: Prepare data for updates
+      const updateData = {
         displayName: data.displayName,
         username: data.username,
         telephone: data.telephone,
-        photoURL: newPhotoURL,
+        photoURL: photoURL,
         updatedAt: serverTimestamp(),
-      });
+      };
       
-      setLocalPhotoURL(newPhotoURL);
-      setPhotoFile(null); // Clear the file state after successful submission
-      setIsEditing(false); // Exit edit mode
+      const authUpdateData = {
+        displayName: data.displayName,
+        photoURL: photoURL,
+      };
 
+      // Step 3: Update Auth and Firestore
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await Promise.all([
+        updateAuthProfile(user, authUpdateData),
+        updateDoc(userDocRef, updateData)
+      ]);
+
+      // Step 4: Success state updates
+      setPhotoFile(null); // Clear the uploaded file
+      setIsEditing(false); // Exit edit mode
       toast({
         title: 'Profile Updated',
-        description: 'Your profile has been updated successfully.',
+        description: 'Your profile has been saved successfully.',
       });
+
     } catch (error) {
-      console.error(error);
+      console.error("Profile update failed:", error);
       toast({
-        variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Could not update your profile. Please try again.',
+        variant: "destructive",
+        title: "Update Failed",
+        description: "An unexpected error occurred while saving your profile.",
       });
     } finally {
       setIsSubmitting(false);
@@ -186,7 +186,7 @@ export default function ProfilePage() {
     try {
         // Optionally, delete Firestore document first
         if (firestore) {
-            await deleteDoc(doc(firestore, 'users', user.uid));
+            await deleteFirestoreDoc(doc(firestore, 'users', user.uid));
         }
         await deleteUser(user);
         toast({
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                                       onClick={() => fileInputRef.current?.click()}
                                       disabled={isSubmitting}
                                     >
-                                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pencil className="h-4 w-4"/>}
+                                        <Pencil className="h-4 w-4"/>
                                         <span className="sr-only">Edit picture</span>
                                     </Button>
                                     )}
@@ -317,8 +317,7 @@ export default function ProfilePage() {
                             <div className="flex gap-2">
                                 {isEditing ? (
                                     <Button type="submit" disabled={isSubmitting}>
-                                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                        <Save className="mr-2"/>
+                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2"/>}
                                         Save Changes
                                     </Button>
                                 ) : (
@@ -328,15 +327,10 @@ export default function ProfilePage() {
                                     </Button>
                                 )}
                                 {isEditing && (
-                                     <Button variant="ghost" onClick={() => {
+                                     <Button variant="ghost" type="button" onClick={() => {
                                          setIsEditing(false);
-                                         form.reset({
-                                             displayName: appUser.displayName,
-                                             username: appUser.username,
-                                             telephone: appUser.telephone,
-                                         });
-                                         setLocalPhotoURL(appUser.photoURL);
-                                         setPhotoFile(null);
+                                         setPhotoFile(null); // Reset file selection
+                                         // form.reset() is called by useEffect, which is better
                                      }}>
                                          Cancel
                                      </Button>
