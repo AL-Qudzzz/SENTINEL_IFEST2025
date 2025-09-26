@@ -367,8 +367,11 @@ export default function ContractDetailPage({ params: { id } }: { params: { id: s
         {!isLoading && contract && <ContractDetailView contract={contract} contractId={id} />}
         {!isLoading && !contract && (
            <Card>
-              <CardContent className="flex items-center justify-center h-64">
+              <CardContent className="flex flex-col items-center justify-center h-64 gap-4">
                 <p className="text-muted-foreground">Contract not found.</p>
+                 <Button asChild>
+                    <Link href="/contracts">Go back to Contracts</Link>
+                </Button>
               </CardContent>
            </Card>
         )}
