@@ -127,7 +127,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const isMobile = useIs-mobile()
+    const isMobile = useIsMobile()
     const { open, setOpen } = useSidebar()
 
     if (isMobile) {
@@ -632,3 +632,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    
