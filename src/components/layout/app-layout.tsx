@@ -18,7 +18,9 @@ import {
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { User as AppUser } from '@/lib/types';
 
 
 import {
@@ -47,6 +49,7 @@ import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { NotificationBell } from './NotificationBell';
 import Link from 'next/link';
+import { Skeleton } from '../ui/skeleton';
 
 const navItems = [
   {
@@ -81,6 +84,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
   const auth = useAuth();
   const router = useRouter();
+
+  const { user } = useUser(); // Get the auth user
+  const { firestore } = useFirebase(); // Get firestore instance
+
+  // Create a memoized reference to the user document
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -149,13 +162,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         data-ai-hint={userAvatar.imageHint}
                       />
                     )}
-                    <AvatarFallback>JD</AvatarFallback>
+                    <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:w-0">
-                    <span className="font-medium">Jane Doe</span>
-                    <span className="text-xs text-muted-foreground">
-                      Legal Counsel
-                    </span>
+                    {isAppUserLoading ? (
+                      <div className='space-y-1'>
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    ) : (
+                      <>
+                        <span className="font-medium">{appUser?.displayName || 'User'}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {appUser?.role || 'Role'}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </Button>
               </DropdownMenuTrigger>
