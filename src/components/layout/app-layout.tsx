@@ -59,6 +59,11 @@ const navItems = [
     icon: FileText,
   },
   {
+    href: '/collaboration',
+    label: 'Collaboration',
+    icon: Users,
+  },
+  {
     href: '/risk-analysis',
     label: 'Risk Analysis',
     icon: ShieldAlert,
