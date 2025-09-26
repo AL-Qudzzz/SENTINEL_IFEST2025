@@ -23,15 +23,15 @@ export function NotificationBell() {
     const { firestore } = useFirebase();
     const { toast } = useToast();
 
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const tenDaysFromNow = new Date();
+    tenDaysFromNow.setDate(tenDaysFromNow.getDate() + 10);
 
     const expiringContractsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(
             collection(firestore, 'contracts'),
             where('status', '==', 'Active'),
-            where('expirationDate', '<=', thirtyDaysFromNow.toISOString())
+            where('expirationDate', '<=', tenDaysFromNow.toISOString())
         );
     }, [firestore]);
 
@@ -83,7 +83,7 @@ export function NotificationBell() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-80">
-                <DropdownMenuLabel>Expiring Contracts</DropdownMenuLabel>
+                <DropdownMenuLabel>Expiring Soon (10 days)</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="max-h-80 overflow-y-auto">
                     {isLoading && (
@@ -98,7 +98,7 @@ export function NotificationBell() {
                             <DropdownMenuItem key={contract.id} className="flex flex-col items-start gap-1 p-2">
                                 <div className="w-full flex justify-between items-center">
                                     <p className="font-semibold text-sm truncate">{contract.title}</p>
-                                    <Badge variant={daysLeft < 15 ? 'destructive' : 'secondary'}>{daysLeft} days left</Badge>
+                                    <Badge variant={daysLeft < 5 ? 'destructive' : 'secondary'}>{daysLeft} days left</Badge>
                                 </div>
                                 <p className="text-xs text-muted-foreground w-full">Partner: {contract.partner}</p>
                                 <Button
@@ -124,4 +124,3 @@ export function NotificationBell() {
         </DropdownMenu>
     );
 }
-
