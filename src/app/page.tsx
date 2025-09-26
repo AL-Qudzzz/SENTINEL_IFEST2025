@@ -70,7 +70,7 @@ export default function Home() {
           icon={FileUp}
         />
 
-        <div className="grid gap-6 lg:col-span-2">
+        <div className="grid gap-6 lg:col-span-2 lg:row-span-2">
           <RecentActivityTable />
         </div>
 

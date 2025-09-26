@@ -36,7 +36,7 @@ export function RecentActivityTable() {
   const { firestore } = useFirebase();
   const contractsQuery = useMemoFirebase(() => 
     firestore 
-      ? query(collection(firestore, 'contracts'), orderBy('updatedAt', 'desc'), limit(5)) 
+      ? query(collection(firestore, 'contracts'), orderBy('updatedAt', 'desc'), limit(10)) 
       : null
   , [firestore]);
   const { data: recentContracts, isLoading } = useCollection<Contract>(contractsQuery);
@@ -52,14 +52,14 @@ export function RecentActivityTable() {
   };
 
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
         <CardDescription>
           Overview of the latest contract updates and statuses.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <Table>
           <TableHeader>
             <TableRow>
