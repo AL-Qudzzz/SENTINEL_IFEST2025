@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,7 +14,10 @@ import {
   ShieldAlert,
   Users,
 } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+import { useAuth } from '@/firebase';
+
 
 import {
   SidebarProvider,
@@ -74,6 +78,14 @@ const navItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
 
   return (
     <SidebarProvider>
@@ -150,7 +162,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2" />
                 <span>Log out</span>
               </DropdownMenuItem>

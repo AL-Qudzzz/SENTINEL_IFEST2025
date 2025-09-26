@@ -1,24 +1,68 @@
 
 'use client';
 
-import type { Metadata } from 'next';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { AppLayout } from '@/components/layout/app-layout';
 import './globals.css';
-import { FirebaseClientProvider } from '@/firebase';
+import { FirebaseClientProvider, useUser } from '@/firebase';
+import { Loader2 } from 'lucide-react';
 
-// This metadata is not used in the client-rendered layout,
-// but it's good practice to keep it for potential static generation.
-// export const metadata: Metadata = {
-//   title: 'Sentinel: Intelligent Contract Lifecycle Management',
-//   description: 'Proactively manage your contracts with AI-powered insights and automation.',
-// };
+
+function AuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // If auth is done loading and there's no user, redirect to login.
+    if (!isUserLoading && !user) {
+      // Don't redirect if we are already on a public auth page.
+      if (pathname !== '/login' && pathname !== '/signup') {
+        router.replace('/login');
+      }
+    }
+  }, [user, isUserLoading, router, pathname]);
+
+  // While checking user status, show a loader.
+  // This prevents rendering the app layout for a moment before redirecting.
+  if (isUserLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p>Loading Sentinel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is logged in, or we are on a public auth page, show the children.
+  if (user || pathname === '/login' || pathname === '/signup') {
+     return <>{children}</>;
+  }
+
+  // If no user and not on a public page, we are about to redirect, so show a loader.
+  return (
+     <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p>Redirecting...</p>
+        </div>
+      </div>
+  );
+}
+
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -33,7 +77,13 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <FirebaseClientProvider>
-          <AppLayout>{children}</AppLayout>
+           <AuthGuard>
+            {isAuthPage ? (
+              children
+            ) : (
+              <AppLayout>{children}</AppLayout>
+            )}
+          </AuthGuard>
         </FirebaseClientProvider>
         <Toaster />
       </body>
