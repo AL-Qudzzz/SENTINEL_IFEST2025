@@ -31,7 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 function parseDate(dateString: string | undefined | null): Date | null {
   if (!dateString) return null;
 
-  // 1. Try direct parsing (handles ISO 8601 and many common formats like YYYY-MM-DD)
+  // 1. Try direct parsing (handles ISO 8601 and many common formats like YYYY-MM-DD, and "Month day, year")
   let date = new Date(dateString);
   if (!isNaN(date.getTime())) {
     return date;
@@ -176,6 +176,7 @@ export function UploadContractDialog() {
     const expirationDateStr = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
     const contractDurationStr = result.importantDates.contractDuration;
 
+    // Correctly establish the final effective date. Prioritize the parsed date from AI.
     const finalEffectiveDate = parseDate(effectiveDateStr) ?? new Date();
 
     const getExpirationDate = (): string => {
@@ -192,7 +193,7 @@ export function UploadContractDialog() {
         const unit = durationParts[1];
 
         if (!isNaN(amount) && unit) {
-          const newDate = new Date(finalEffectiveDate);
+          const newDate = new Date(finalEffectiveDate); // Use the finalEffectiveDate
           if (unit.startsWith('year')) {
             newDate.setFullYear(newDate.getFullYear() + amount);
             return newDate.toISOString();
@@ -208,7 +209,7 @@ export function UploadContractDialog() {
         }
       }
 
-      // Priority 3: Default to one year from the effective date
+      // Priority 3: Default to one year from the finalEffectiveDate. THIS IS THE FALLBACK.
       const oneYearFromEffectiveDate = new Date(finalEffectiveDate);
       oneYearFromEffectiveDate.setFullYear(oneYearFromEffectiveDate.getFullYear() + 1);
       return oneYearFromEffectiveDate.toISOString();
