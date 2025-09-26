@@ -131,23 +131,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="p-2 flex flex-col items-center justify-between">
-             <Link href="/profile" className="w-full">
-                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent w-full">
+          <SidebarFooter className="p-2 flex flex-col gap-2">
+             <Link href="/profile" className="w-full rounded-md hover:bg-sidebar-accent">
+                <div className="flex items-center gap-3 p-2 w-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
                       <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                     </Avatar>
-                    <div className="flex flex-col items-start overflow-hidden w-0 group-hover/sidebar:w-full transition-[width]">
+                    <div className="flex flex-col items-start overflow-hidden opacity-0 w-0 group-hover/sidebar:w-full group-hover/sidebar:opacity-100 transition-all">
                       {isAppUserLoading ? (
                         <div className='space-y-1'>
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-4 w-20 bg-sidebar-accent" />
+                          <Skeleton className="h-3 w-16 bg-sidebar-accent" />
                         </div>
                       ) : (
                         <>
-                          <span className="font-medium">{appUser?.displayName || 'User'}</span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="font-medium text-sm whitespace-nowrap">{appUser?.displayName || 'User'}</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
                             {appUser?.role || 'Role'}
                           </span>
                         </>
@@ -159,27 +159,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="h-12 w-full justify-start gap-2 px-2"
+                    className="h-10 w-full justify-center group-hover/sidebar:justify-start gap-2 px-2"
                     aria-label="View Profile"
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={appUser?.photoURL} alt={appUser?.displayName} />
-                      <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col items-start overflow-hidden w-0 group-hover/sidebar:w-full transition-[width]">
-                      {isAppUserLoading ? (
-                        <div className='space-y-1'>
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-3 w-16" />
-                        </div>
-                      ) : (
-                        <>
-                          <span className="font-medium">{appUser?.displayName || 'User'}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {appUser?.role || 'Role'}
-                          </span>
-                        </>
-                      )}
+                    <Settings className="h-4 w-4" />
+                    <div className="flex flex-col items-start overflow-hidden opacity-0 w-0 group-hover/sidebar:w-full group-hover/sidebar:opacity-100 transition-all">
+                       <span className="font-medium text-sm whitespace-nowrap">Settings</span>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
