@@ -518,7 +518,10 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
               <Textarea
                 className="flex-1 font-mono text-xs"
                 value={contractContent}
-                onChange={(e) => setContractContent(e.target.value)}
+                onChange={(e) => {
+                    setContractContent(e.target.value);
+                    if (!isDraftModified) setIsDraftModified(true);
+                }}
               />
             </CardContent>
           </Card>
@@ -741,4 +744,5 @@ export default function CollaborationClientPage({ id }: { id: string }) {
     );
 }
 
+    
     
