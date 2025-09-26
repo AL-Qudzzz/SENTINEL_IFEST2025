@@ -155,13 +155,13 @@ const Sidebar = React.forwardRef<
         ref={ref}
         data-sidebar="sidebar"
         className={cn(
-          "group/sidebar z-20 w-[var(--sidebar-width-collapsed)] shrink-0 transition-[width] ease-in-out",
+          "group/sidebar fixed top-0 left-0 h-full z-20 w-[var(--sidebar-width-collapsed)] shrink-0 transition-[width] ease-in-out",
           "hover:w-[var(--sidebar-width-expanded)]",
           className
         )}
         {...props}
       >
-        <div className="flex h-full w-full flex-col">{children}</div>
+        <div className="fixed top-0 left-0 h-full w-inherit flex flex-col">{children}</div>
       </div>
     )
   }
@@ -202,7 +202,7 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-background",
+        "relative flex min-h-svh flex-1 flex-col bg-background pl-[var(--sidebar-width-collapsed)]",
         className
       )}
       {...props}
