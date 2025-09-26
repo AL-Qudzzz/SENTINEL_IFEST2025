@@ -36,7 +36,7 @@ const detectContractRiskPrompt = ai.definePrompt({
   1.  Skor risiko (0-100).
   2.  Faktor-faktor risiko yang teridentifikasi.
   3.  Saran rumusan alternatif yang lebih aman dan sesuai dengan kebijakan.
-  4.  Alasan (rationale) mengapa klausul tersebut berisiko dan mengapa alternatif yang disarankan lebih baik, dengan mengacu pada tujuan GRC dan pencegahan kebocoran nilai.
+  4.  Alasan (rationale) mengapa klausul tersebut berisiko dan mengapa alternatif yang disarankan lebih baik, dengan mengacu pada tujuan GRC dan pencegahan kebocoran nilai. Format rationale ini sebagai daftar berpoin yang terstruktur untuk kejelasan.
 
   SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA.
 
