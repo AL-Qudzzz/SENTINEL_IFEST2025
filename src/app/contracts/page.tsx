@@ -155,9 +155,9 @@ export default function ContractsPage() {
                       <TableRow>
                         <TableHead>Contract Title</TableHead>
                         <TableHead>Partner</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Risk Score</TableHead>
-                        <TableHead>Expiration Date</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="whitespace-nowrap">Risk Score</TableHead>
+                        <TableHead className="whitespace-nowrap">Expiration Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -180,17 +180,17 @@ export default function ContractsPage() {
                             </Link>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
                               {contract.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             <Badge variant={getRiskVariant(contract.riskScore)}>
                               {contract.riskScore ?? 'N/A'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{formatDate(contract.expirationDate)}</TableCell>
+                          <TableCell className="whitespace-nowrap">{formatDate(contract.expirationDate)}</TableCell>
                           <TableCell className="text-right">
                              <Button variant="ghost" size="icon" asChild>
                               <Link href={`/collaboration/${contract.id}`} title="Collaborate">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -78,7 +79,7 @@ export default function CollaborationHubPage() {
                 <TableRow>
                   <TableHead>Contract Title</TableHead>
                   <TableHead>Partner</TableHead>
-                  <TableHead>Current Stage</TableHead>
+                  <TableHead className="whitespace-nowrap">Current Stage</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -99,7 +100,7 @@ export default function CollaborationHubPage() {
                       <TableRow key={contract.id}>
                         <TableCell className="font-medium">{contract.title}</TableCell>
                         <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                             <Badge variant={stageVariant[currentStage] ?? 'default'}>
                                 {currentStage}
                             </Badge>
