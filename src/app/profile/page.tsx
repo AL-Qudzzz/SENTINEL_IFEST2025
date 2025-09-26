@@ -67,7 +67,7 @@ export default function ProfilePage() {
       });
       setLocalPhotoURL(appUser.photoURL);
     }
-  }, [appUser, isEditing, form]);
+  }, [appUser, isEditing]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -99,7 +99,8 @@ export default function ProfilePage() {
     setIsSubmitting(true);
 
     try {
-        let newPhotoURL: string | null = null;
+        let newPhotoURL: string | undefined = undefined;
+
         // Step 1: Upload new photo if it exists
         if (photoFile) {
             try {
@@ -119,15 +120,19 @@ export default function ProfilePage() {
             telephone: data.telephone,
             updatedAt: serverTimestamp(),
         };
+        if (newPhotoURL) {
+            firestoreUpdateData.photoURL = newPhotoURL;
+        }
 
         const authUpdateData: { displayName: string; photoURL?: string } = {
             displayName: data.displayName,
         };
-
         if (newPhotoURL) {
-            firestoreUpdateData.photoURL = newPhotoURL;
             authUpdateData.photoURL = newPhotoURL;
+        } else if (appUser?.photoURL) {
+            authUpdateData.photoURL = appUser.photoURL;
         }
+
 
         // Step 3: Execute updates
         const userDocRef = doc(firestore, 'users', user.uid);
