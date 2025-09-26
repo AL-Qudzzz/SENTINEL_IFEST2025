@@ -46,6 +46,8 @@ export default function ProfilePage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [localPhotoURL, setLocalPhotoURL] = useState<string | undefined>(undefined);
+
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -63,6 +65,7 @@ export default function ProfilePage() {
         username: appUser.username || '',
         telephone: appUser.telephone || '',
       });
+      setLocalPhotoURL(appUser.photoURL);
     }
   }, [appUser, form]);
 
@@ -83,6 +86,8 @@ export default function ProfilePage() {
     try {
       await uploadBytes(storageRef, file);
       const photoURL = await getDownloadURL(storageRef);
+      
+      setLocalPhotoURL(photoURL); // Update local state immediately for UI change
 
       // Update Auth and Firestore
       await updateProfile(user, { photoURL });
@@ -212,7 +217,7 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-6">
                                 <div className="relative">
                                     <Avatar className="h-20 w-20">
-                                        <AvatarImage src={appUser?.photoURL} alt="User Avatar" />
+                                        <AvatarImage src={localPhotoURL} alt="User Avatar" />
                                         <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                                     </Avatar>
                                     <Input 
@@ -355,3 +360,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
