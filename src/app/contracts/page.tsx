@@ -47,6 +47,9 @@ const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'o
   'Expired': 'destructive',
   'Pending Renewal': 'default',
   'Terminated': 'destructive',
+  'Legal Review': 'secondary',
+  'Finance Approval': 'secondary',
+  'Executive Sign-off': 'default',
 };
 
 const getRiskVariant = (score?: number): "destructive" | "secondary" | "default" => {
@@ -149,72 +152,70 @@ export default function ContractsPage() {
                   ))}
                 </TabsList>
                 
-                <TabsContent value={filter}>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Contract Title</TableHead>
-                        <TableHead>Partner</TableHead>
-                        <TableHead className="whitespace-nowrap">Status</TableHead>
-                        <TableHead className="whitespace-nowrap">Risk Score</TableHead>
-                        <TableHead className="whitespace-nowrap">Expiration Date</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Contract Title</TableHead>
+                      <TableHead>Partner</TableHead>
+                      <TableHead className="whitespace-nowrap">Status</TableHead>
+                      <TableHead className="whitespace-nowrap">Risk Score</TableHead>
+                      <TableHead className="whitespace-nowrap">Expiration Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading && Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading && Array.from({ length: 5 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
-                          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                          <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
-                        </TableRow>
-                      ))}
-                      {!isLoading && contracts?.map((contract) => (
-                        <TableRow key={contract.id}>
-                          <TableCell className="font-medium">
-                             <Link href={`/contracts/${contract.id}`} className="hover:underline">
-                              {contract.title}
+                    ))}
+                    {!isLoading && contracts?.map((contract) => (
+                      <TableRow key={contract.id}>
+                        <TableCell className="font-medium">
+                           <Link href={`/contracts/${contract.id}`} className="hover:underline">
+                            {contract.title}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
+                            {contract.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          <Badge variant={getRiskVariant(contract.riskScore)}>
+                            {contract.riskScore ?? 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">{formatDate(contract.expirationDate)}</TableCell>
+                        <TableCell className="text-right">
+                           <Button variant="ghost" size="icon" asChild>
+                            <Link href={`/collaboration/${contract.id}`} title="Collaborate">
+                              <Users className="h-4 w-4" />
+                              <span className="sr-only">Collaborate on contract</span>
                             </Link>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
-                              {contract.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            <Badge variant={getRiskVariant(contract.riskScore)}>
-                              {contract.riskScore ?? 'N/A'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{formatDate(contract.expirationDate)}</TableCell>
-                          <TableCell className="text-right">
-                             <Button variant="ghost" size="icon" asChild>
-                              <Link href={`/collaboration/${contract.id}`} title="Collaborate">
-                                <Users className="h-4 w-4" />
-                                <span className="sr-only">Collaborate on contract</span>
-                              </Link>
-                            </Button>
-                             <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(contract)} title="Delete">
-                              <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
-                              <span className="sr-only">Delete contract</span>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {!isLoading && contracts?.length === 0 && (
-                         <TableRow>
-                           <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                             No contracts found for this filter.
-                           </TableCell>
-                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TabsContent>
+                          </Button>
+                           <Button variant="ghost" size="icon" onClick={() => openDeleteDialog(contract)} title="Delete">
+                            <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
+                            <span className="sr-only">Delete contract</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!isLoading && contracts?.length === 0 && (
+                       <TableRow>
+                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                           No contracts found for this filter.
+                         </TableCell>
+                       </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </Tabs>
             </CardContent>
           </Card>
