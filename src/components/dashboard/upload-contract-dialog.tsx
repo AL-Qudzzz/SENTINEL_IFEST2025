@@ -1,4 +1,3 @@
-
 'use client';
 import { useState } from 'react';
 import mammoth from 'mammoth';
@@ -21,16 +20,9 @@ import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFirebase } from '@/firebase/provider';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import type { Contract } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-
-// Conditional import for pdf-parse worker
-if (typeof window !== 'undefined') {
-  (window as any).pdfjsWorker = import('pdfjs-dist/build/pdf.worker.min.mjs');
-}
-
 
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,54 +55,47 @@ export function UploadContractDialog() {
     setFileName(file.name);
     setFileType(file.type);
     setIsParsing(true);
+    setError(null);
 
-    try {
-      const reader = new FileReader();
+    const formData = new FormData();
+    formData.append('file', file);
 
-      if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') { // DOCX
-        reader.onload = async (e) => {
-          try {
-            const arrayBuffer = e.target?.result as ArrayBuffer;
-            const textResult = await mammoth.extractRawText({ arrayBuffer });
-            setContractText(textResult.value);
-            setError(null);
-          } catch (err) {
-            console.error('Error parsing DOCX file:', err);
-            setError('Failed to parse DOCX file. It might be corrupted or in an unsupported format.');
-          } finally {
-            setIsParsing(false);
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      } else if (file.type === 'application/pdf') { // PDF
-        reader.onload = async (e) => {
-          try {
-            const arrayBuffer = e.target?.result as ArrayBuffer;
-            const data = await pdfParse(arrayBuffer);
-            setContractText(data.text);
-            setError(null);
-          } catch (err) {
-            console.error('Error parsing PDF file:', err);
-            setError('Failed to parse PDF file. It might be encrypted or corrupted.');
-          } finally {
-            setIsParsing(false);
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      } else if (file.type.startsWith('text/')) { // TXT
+    let apiEndpoint = '';
+    if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      apiEndpoint = '/api/parse-docx';
+    } else if (file.type === 'application/pdf') {
+      apiEndpoint = '/api/parse-pdf';
+    } else if (file.type.startsWith('text/')) {
+        const reader = new FileReader();
         reader.onload = (e) => {
           setContractText(e.target?.result as string);
-          setError(null);
           setIsParsing(false);
         };
         reader.readAsText(file);
-      } else {
-        setError('Unsupported file type. Please upload a DOCX, PDF, or TXT file.');
-        setIsParsing(false);
+        return;
+    } else {
+      setError('Unsupported file type. Please upload a DOCX, PDF, or TXT file.');
+      setIsParsing(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process file on the server.');
       }
-    } catch (err) {
-      console.error('File handling error:', err);
-      setError('An unexpected error occurred while handling the file.');
+
+      const resultData = await response.json();
+      setContractText(resultData.text);
+    } catch (err: any) {
+      console.error('File parsing error:', err);
+      setError(err.message);
+    } finally {
       setIsParsing(false);
     }
   };
@@ -175,7 +160,7 @@ export function UploadContractDialog() {
     };
 
     const contractsCol = collection(firestore, 'contracts');
-    addDocumentNonBlocking(contractsCol, newContract);
+    await addDoc(contractsCol, newContract);
 
     toast({
       title: 'Success',
