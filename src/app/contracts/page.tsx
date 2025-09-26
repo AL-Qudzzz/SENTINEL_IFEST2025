@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -139,12 +140,6 @@ export default function ContractsPage() {
                         </TableCell>
                         <TableCell>{formatDate(contract.expirationDate)}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" asChild>
-                            <Link href={`/contracts/${contract.id}`}>
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">View contract details</span>
-                            </Link>
-                          </Button>
                           <Button variant="ghost" size="icon" asChild>
                             <Link href={`/collaboration/${contract.id}`}>
                               <Users className="h-4 w-4" />
