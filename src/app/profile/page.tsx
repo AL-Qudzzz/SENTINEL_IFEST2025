@@ -67,7 +67,7 @@ export default function ProfilePage() {
       });
       setLocalPhotoURL(appUser.photoURL);
     }
-  }, [appUser, isEditing]);
+  }, [appUser, isEditing, form]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -120,16 +120,13 @@ export default function ProfilePage() {
             updatedAt: serverTimestamp(),
         };
 
-        const authUpdateData: { displayName: string; photoURL?: string | null } = {
+        const authUpdateData: { displayName: string; photoURL?: string } = {
             displayName: data.displayName,
         };
 
         if (newPhotoURL) {
             firestoreUpdateData.photoURL = newPhotoURL;
             authUpdateData.photoURL = newPhotoURL;
-        } else {
-            // Ensure we don't send `undefined`
-            authUpdateData.photoURL = appUser?.photoURL || null;
         }
 
         // Step 3: Execute updates
