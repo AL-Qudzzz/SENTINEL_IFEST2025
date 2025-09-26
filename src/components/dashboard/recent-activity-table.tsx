@@ -1,3 +1,4 @@
+'use client';
 import {
   Card,
   CardContent,
@@ -14,55 +15,41 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
+import type { Contract, Status } from '@/lib/types';
 
-const recentContracts = [
-  {
-    id: 'CN-001',
-    name: 'Master Service Agreement',
-    partner: 'Innovate Corp',
-    status: 'Active',
-    updatedAt: '2 hours ago',
-  },
-  {
-    id: 'CN-002',
-    name: 'Non-Disclosure Agreement',
-    partner: 'Quantum Solutions',
-    status: 'In Review',
-    updatedAt: '5 hours ago',
-  },
-  {
-    id: 'CN-003',
-    name: 'Software License Agreement',
-    partner: 'TechGenius Ltd.',
-    status: 'Drafting',
-    updatedAt: '1 day ago',
-  },
-  {
-    id: 'CN-004',
-    name: 'Supply Chain Contract',
-    partner: 'Global Logistics',
-    status: 'Expired',
-    updatedAt: '3 days ago',
-  },
-  {
-    id: 'CN-005',
-    name: 'Partnership Agreement',
-    partner: 'Synergy Partners',
-    status: 'Active',
-    updatedAt: '5 days ago',
-  },
-];
-
-type Status = 'Active' | 'In Review' | 'Drafting' | 'Expired';
 
 const statusVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
   'In Review': 'secondary',
   'Drafting': 'outline',
   'Expired': 'destructive',
+  'Pending Renewal': 'default',
+  'Terminated': 'destructive',
 };
 
 export function RecentActivityTable() {
+  const { firestore } = useFirebase();
+  const contractsQuery = useMemoFirebase(() => 
+    firestore 
+      ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc'), limit(5)) 
+      : null
+  , [firestore]);
+  const { data: recentContracts, isLoading } = useCollection<Contract>(contractsQuery);
+
+  const formatTimestamp = (timestamp: any) => {
+    if (!timestamp) return 'N/A';
+    try {
+      const date = timestamp.toDate();
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (e) {
+      return 'just now'
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -81,22 +68,39 @@ export function RecentActivityTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentContracts.map((contract) => (
+            {isLoading && Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2 mt-2" />
+                </TableCell>
+                <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
+              </TableRow>
+            ))}
+            {!isLoading && recentContracts?.map((contract) => (
               <TableRow key={contract.id}>
                 <TableCell>
-                  <div className="font-medium">{contract.name}</div>
+                  <div className="font-medium">{contract.title}</div>
                   <div className="text-sm text-muted-foreground">
                     {contract.partner}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={statusVariant[contract.status as Status]}>
+                  <Badge variant={statusVariant[contract.status as Status] ?? 'default'}>
                     {contract.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">{contract.updatedAt}</TableCell>
+                <TableCell className="text-right">{formatTimestamp(contract.createdAt)}</TableCell>
               </TableRow>
             ))}
+            {!isLoading && recentContracts?.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  No recent activity. Upload a contract to get started.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

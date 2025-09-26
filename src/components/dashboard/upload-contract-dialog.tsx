@@ -17,6 +17,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/extract-contract-data-flow';
 import { Separator } from '../ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFirebase } from '@/firebase/provider';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import type { Contract } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export function UploadContractDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +29,9 @@ export function UploadContractDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ExtractContractDataOutput | null>(null);
+
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
 
   const resetState = () => {
     setContractText('');
@@ -49,7 +56,6 @@ export function UploadContractDialog() {
         setError('Failed to read file.');
         console.error('FileReader error:', e);
       };
-      // For now, we only support text files. PDF/DOC will need a more complex OCR setup.
       if (file.type.startsWith('text/')) {
         reader.readAsText(file);
       } else {
@@ -78,10 +84,50 @@ export function UploadContractDialog() {
     }
   };
 
+  const handleSaveContract = async () => {
+    if (!result || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No extracted data to save or database not available.",
+      });
+      return;
+    }
+
+    const effectiveDate = result.importantDates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
+    const expirationDate = result.importantDates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+
+    const newContract: Omit<Contract, 'id'> = {
+      title: fileName || 'Untitled Contract',
+      partner: result.metadata.partiesInvolved || 'N/A',
+      status: 'Drafting',
+      effectiveDate: effectiveDate ? new Date(effectiveDate).toISOString() : new Date().toISOString(),
+      expirationDate: expirationDate ? new Date(expirationDate).toISOString() : new Date().toISOString(),
+      contractValue: result.metadata.contractValue || 'N/A',
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      const contractsCol = collection(firestore, 'contracts');
+      await addDoc(contractsCol, newContract);
+      toast({
+        title: "Success",
+        description: "Contract has been saved successfully.",
+      });
+      handleOpenChange(false);
+    } catch (e: any) {
+      console.error("Error saving contract: ", e);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: e.message || "Could not save the contract to the database.",
+      });
+    }
+  };
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      // Reset state when dialog is closed
       resetState();
     }
   }
@@ -104,7 +150,7 @@ export function UploadContractDialog() {
         <div className="grid gap-6 py-4">
           <div className="flex items-center justify-center w-full">
             <Label
-              htmlFor="file-upload"
+              htmlFor="file-upload-dialog"
               className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-secondary"
             >
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -117,7 +163,7 @@ export function UploadContractDialog() {
                   <p className="mt-2 text-sm font-medium text-primary">{fileName}</p>
                 )}
               </div>
-              <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} accept=".txt" />
+              <Input id="file-upload-dialog" type="file" className="hidden" onChange={handleFileChange} accept=".txt" />
             </Label>
           </div>
 
@@ -167,16 +213,20 @@ export function UploadContractDialog() {
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleAnalyze} disabled={isLoading || !contractText}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              'Analyze Contract'
-            )}
-          </Button>
+          {result ? (
+             <Button onClick={handleSaveContract}>Save Contract</Button>
+          ) : (
+            <Button onClick={handleAnalyze} disabled={isLoading || !contractText}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                'Analyze Contract'
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
