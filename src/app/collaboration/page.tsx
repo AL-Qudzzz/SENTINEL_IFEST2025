@@ -26,15 +26,6 @@ import type { Contract, Status } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 
-const stageVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  'Legal Review': 'secondary',
-  'Finance Approval': 'secondary',
-  'Executive Sign-off': 'default',
-  'Active': 'outline',
-  'In Review': 'secondary',
-  'Drafting': 'outline',
-};
-
 const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   'Active': 'default',
   'In Review': 'secondary',
@@ -42,6 +33,9 @@ const statusBadgeVariant: Record<Status, 'default' | 'secondary' | 'destructive'
   'Expired': 'destructive',
   'Pending Renewal': 'default',
   'Terminated': 'destructive',
+  'Legal Review': 'secondary',
+  'Finance Approval': 'secondary',
+  'Executive Sign-off': 'default',
 };
 
 export default function CollaborationHubPage() {
@@ -79,7 +73,6 @@ export default function CollaborationHubPage() {
                 <TableRow>
                   <TableHead>Contract Title</TableHead>
                   <TableHead>Partner</TableHead>
-                  <TableHead className="whitespace-nowrap">Current Stage</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -90,21 +83,14 @@ export default function CollaborationHubPage() {
                     <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
                     <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                   </TableRow>
                 ))}
                 {!isLoading && contracts?.map((contract) => {
-                    const currentStage = contract.status;
                     return (
                       <TableRow key={contract.id}>
                         <TableCell className="font-medium">{contract.title}</TableCell>
                         <TableCell className="text-muted-foreground">{contract.partner}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                            <Badge variant={stageVariant[currentStage] ?? 'default'}>
-                                {currentStage}
-                            </Badge>
-                        </TableCell>
                         <TableCell>
                            <Badge variant={statusBadgeVariant[contract.status as Status] ?? 'default'}>
                             {contract.status}
@@ -123,7 +109,7 @@ export default function CollaborationHubPage() {
                 })}
                 {!isLoading && contracts?.length === 0 && (
                    <TableRow>
-                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                     <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                        No contracts available for collaboration.
                      </TableCell>
                    </TableRow>

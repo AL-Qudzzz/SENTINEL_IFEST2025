@@ -465,7 +465,6 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         return 'just now';
       };
     
-    const currentStage = approvalSteps?.find(s => s.status === 'Pending')?.stepName || contract.status;
     const isFinalStage = approvalSteps && approvalSteps.every(s => s.status === 'Approved');
     const canSubmit = approvalSteps?.some(s => s.status === 'Pending');
 
@@ -478,7 +477,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
               <div>
                 <CardTitle>{contract.title}</CardTitle>
                 <CardDescription>
-                  Currently in <span className="text-yellow-500 font-semibold">{currentStage}</span> stage. Version 2.1.
+                  Status: <span className="text-yellow-500 font-semibold">{contract.status}</span>. Version 2.1.
                 </CardDescription>
               </div>
                <div className="flex items-center gap-2">
