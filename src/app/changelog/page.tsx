@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -44,7 +45,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Skeleton } from '../ui/skeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const navItems = [
   {
