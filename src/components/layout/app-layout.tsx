@@ -9,12 +9,11 @@ import {
   LayoutDashboard,
   LogOut,
   MessageCircleQuestion,
+  PanelLeft,
   Settings,
   ShieldAlert,
   Users,
   Bell,
-  Pin,
-  PinOff,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -104,17 +103,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <Sidebar
-        collapsible="icon"
+        side="left"
         className="border-sidebar-border bg-sidebar text-sidebar-foreground"
       >
         <div className="flex h-full flex-col">
           <SidebarHeader className="h-16 items-center flex justify-between">
             <div
               data-sidebar="header-content"
-              className="flex items-center gap-2 overflow-hidden group-data-[collapsible=icon]:w-0"
+              className="flex items-center gap-2 overflow-hidden"
             >
               <span className="font-headline text-lg font-bold">SENTINEL</span>
             </div>
+            <SidebarTrigger className='md:hidden' />
           </SidebarHeader>
           <SidebarContent className="flex-1">
             <SidebarGroup>
@@ -136,20 +136,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="p-2 flex flex-col gap-2">
+          <SidebarFooter className="p-2 flex flex-row items-center justify-between">
             <NotificationBell>
-                 <div className="relative flex items-center w-full">
-                    <Button variant="ghost" className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 h-12 px-2">
-                        <Bell />
-                        <span className='overflow-hidden group-data-[collapsible=icon]:w-0'>Notification</span>
-                    </Button>
-                 </div>
+              <Button variant="ghost" size="icon" className="relative h-10 w-10 shrink-0">
+                  <Bell />
+                  <span className="sr-only">Toggle notifications</span>
+              </Button>
             </NotificationBell>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-12 w-full justify-start gap-2 px-2 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+                  className="h-12 w-full justify-start gap-2 px-2"
                 >
                   <Avatar className="h-8 w-8">
                     {userAvatar && (
@@ -163,7 +161,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     )}
                     <AvatarFallback>{appUser?.displayName?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col items-start overflow-hidden group-data-[collapsible=icon]:w-0">
+                  <div className="flex flex-col items-start overflow-hidden">
                     {isAppUserLoading ? (
                       <div className='space-y-1'>
                         <Skeleton className="h-4 w-20" />
@@ -203,7 +201,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </div>
       </Sidebar>
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+            <SidebarTrigger />
+            {/* You can add more header content here, like breadcrumbs or a title */}
+        </header>
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }
