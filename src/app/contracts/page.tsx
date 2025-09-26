@@ -157,7 +157,7 @@ export default function ContractsPage() {
                       <TabsTrigger key={status} value={status} className="whitespace-nowrap">{status}</TabsTrigger>
                     ))}
                   </TabsList>
-                   <div className="relative w-full max-w-sm">
+                   <div className="relative w-full sm:w-auto sm:flex-grow max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search by title..."
