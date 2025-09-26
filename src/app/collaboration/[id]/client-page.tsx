@@ -26,6 +26,7 @@ import {
   Trash2,
   Wand2,
   PencilRuler,
+  Save,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -53,7 +54,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
 import type { Contract, ContractComment, ApprovalStep, ApprovalStatus } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -95,30 +96,6 @@ function WorkflowStep({ stepName, approverName, status, approverAvatar, initials
       </Avatar>
     </div>
   );
-}
-
-function SmartDraftResult({ result, onCopy }: { result: GenerateContractTemplateOutput, onCopy: (text: string) => void }) {
-    return (
-      <Card>
-        <CardHeader className='flex-row items-center justify-between'>
-            <div>
-              <CardTitle className="flex items-center gap-2"><PencilRuler className="text-primary"/> Smart Draft Template</CardTitle>
-              <CardDescription>
-                This is the AI-generated professional template based on the contract under review.
-              </CardDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => onCopy(result.templateContractText)}>
-                <Copy className='mr-2'/>
-                Copy Template
-            </Button>
-        </CardHeader>
-        <CardContent>
-            <pre className="bg-muted p-4 rounded-md text-sm text-muted-foreground overflow-auto max-h-[600px] font-code">
-              {result.templateContractText}
-            </pre>
-        </CardContent>
-      </Card>
-    )
 }
 
 function ShareDialog({contractTitle}: {contractTitle: string}) {
@@ -234,9 +211,14 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
     
     const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
-    const [smartDraftResult, setSmartDraftResult] = useState<GenerateContractTemplateOutput | null>(null);
     const [draftError, setDraftError] = useState<string | null>(null);
+    
+    const [contractContent, setContractContent] = useState(contract.textContent);
+    const [isDraftModified, setIsDraftModified] = useState(false);
 
+    useEffect(() => {
+        setContractContent(contract.textContent);
+    }, [contract.textContent]);
 
     // Fetch Comments
     const commentsQuery = useMemoFirebase(
@@ -340,13 +322,13 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const handleGenerateSmartDraft = async () => {
         setIsGeneratingDraft(true);
         setDraftError(null);
-        setSmartDraftResult(null);
         try {
-            const result = await generateContractTemplate({ originalContractText: contract.textContent });
-            setSmartDraftResult(result);
+            const result = await generateContractTemplate({ originalContractText: contractContent });
+            setContractContent(result.templateContractText);
+            setIsDraftModified(true);
             toast({
                 title: 'Smart Draft Generated',
-                description: 'A professional template has been created below.',
+                description: 'The contract text has been updated. Review and save the changes.',
             });
         } catch (err: any) {
             setDraftError(err.message || 'Failed to generate smart draft.');
@@ -359,14 +341,33 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
             setIsGeneratingDraft(false);
         }
     };
+    
+    const handleSaveChanges = async () => {
+        if (!firestore) return;
+        setIsSubmitting(true);
+        try {
+            const contractRef = doc(firestore, 'contracts', contractId);
+            await updateDoc(contractRef, {
+                textContent: contractContent,
+                updatedAt: serverTimestamp(),
+            });
+            setIsDraftModified(false);
+            toast({
+                title: 'Changes Saved',
+                description: 'The contract has been updated successfully.',
+            });
+        } catch (error) {
+             console.error('Error saving changes:', error);
+             toast({
+                variant: 'destructive',
+                title: 'Save Failed',
+                description: 'Could not save the contract changes.',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
 
-    const handleCopyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        toast({
-            title: 'Copied to Clipboard',
-            description: 'The template text has been copied.',
-        });
-    };
 
     const handleDeleteComment = async () => {
         if (!commentToDelete || !firestore) return;
@@ -393,6 +394,15 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
 
     const handleAdvanceStage = async () => {
         if (!firestore || !approvalSteps || isSubmitting) return;
+
+        if (isDraftModified) {
+            toast({
+                variant: 'destructive',
+                title: 'Unsaved Changes',
+                description: 'Please save your changes before submitting to the next stage.',
+            });
+            return;
+        }
 
         const currentStepIndex = approvalSteps.findIndex(step => step.status === 'Pending');
         if (currentStepIndex === -1) {
@@ -476,6 +486,12 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                     {isGeneratingDraft ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2" />}
                     Smart Draft
                 </Button>
+                {isDraftModified && (
+                    <Button variant="outline" onClick={handleSaveChanges} disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2" />}
+                        Save Changes
+                    </Button>
+                )}
                 <ShareDialog contractTitle={contract.title} />
                 <Button onClick={handleAdvanceStage} disabled={isSubmitting || !canSubmit || isFinalStage}>
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -483,30 +499,29 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 flex">
+            <CardContent className="flex-1 flex flex-col gap-4">
+              {isDraftModified && (
+                  <Alert>
+                    <PencilRuler className="h-4 w-4" />
+                    <AlertTitle>Draft Updated</AlertTitle>
+                    <AlertDescription>
+                      The contract text was updated by Smart Draft. Review the changes and click "Save Changes" to apply them.
+                    </AlertDescription>
+                  </Alert>
+              )}
+              {draftError && (
+                 <Alert variant="destructive">
+                    <AlertTitle>Drafting Failed</AlertTitle>
+                    <AlertDescription>{draftError}</AlertDescription>
+                 </Alert>
+              )}
               <Textarea
                 className="flex-1 font-mono text-xs"
-                defaultValue={contract.textContent}
+                value={contractContent}
+                onChange={(e) => setContractContent(e.target.value)}
               />
             </CardContent>
           </Card>
-          {isGeneratingDraft && (
-                <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Loader2 className="h-8 w-8 animate-spin" />
-                        <p>AI is generating a professional template...</p>
-                    </div>
-                </div>
-          )}
-          {draftError && (
-             <Alert variant="destructive">
-                <AlertTitle>Drafting Failed</AlertTitle>
-                <AlertDescription>{draftError}</AlertDescription>
-             </Alert>
-          )}
-          {smartDraftResult && (
-             <SmartDraftResult result={smartDraftResult} onCopy={handleCopyToClipboard} />
-          )}
         </div>
 
         {/* Right Sidebar */}
