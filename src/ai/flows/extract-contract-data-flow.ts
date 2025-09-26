@@ -29,8 +29,12 @@ const ExtractContractDataOutputSchema = z.object({
     })
     .describe('Key metadata of the contract, such as contract type, parties involved, and contract value.'),
   importantDates: z
-    .array(z.object({dateType: z.string(), date: z.string()}))
-    .describe('Important dates in the contract, such as effective date, renewal date, and termination date.'),
+    .object({
+      dates: z.array(z.object({dateType: z.string(), date: z.string()})).describe('Key dates like effective, expiration, and renewal dates.'),
+      contractDuration: z.string().optional().describe('The total duration of the contract (e.g., "2 years", "6 months").'),
+      expectedCompletionDate: z.string().optional().describe('The expected date of completion for the contract\'s obligations.'),
+    })
+    .describe('Important dates in the contract, including specific dates, the contract duration, and expected completion date.'),
   obligations: z
     .array(z.string())
     .describe('Key obligations of each party involved in the contract.'),
@@ -54,7 +58,10 @@ const extractContractDataPrompt = ai.definePrompt({
   Given the contract text below, extract the following information and format it as a JSON object:
 
   - Metadata: Key metadata of the contract, such as contract type, parties involved, and contract value.
-  - Important Dates: Important dates in the contract, such as effective date, renewal date, and termination date. Represent each date with its type and the date itself.
+  - Important Dates: 
+    - A list of important dates (effective date, renewal date, termination date).
+    - The overall contract duration (e.g., "2 years").
+    - The expected completion date if specified.
   - Obligations: Key obligations of each party involved in the contract.
   - Performance Metrics: Key Service Level Agreements (SLAs) defined in the contract.
 

@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, Users, CircleDollarSign, Wand2 } from 'lucide-react';
+import { PlusCircle, UploadCloud, Loader2, AlertCircle, FileText, Calendar, Users, CircleDollarSign, Wand2, Clock, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { extractContractData, type ExtractContractDataOutput } from '@/ai/flows/extract-contract-data-flow';
 import { Separator } from '../ui/separator';
@@ -100,8 +100,8 @@ export function UploadContractDialog() {
       return;
     }
 
-    const effectiveDate = result.importantDates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
-    const expirationDateISO = result.importantDates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+    const effectiveDate = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
+    const expirationDateISO = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
 
     const getExpirationDate = () => {
         if (expirationDateISO) {
@@ -201,12 +201,11 @@ export function UploadContractDialog() {
                   <InfoItem icon={Users} label="Parties Involved" value={result.metadata.partiesInvolved || 'N/A'} />
                   <InfoItem icon={CircleDollarSign} label="Contract Value" value={result.metadata.contractValue || 'NA'} />
                   <Separator />
-                  <h4 className="font-semibold text-md">Important Dates</h4>
-                  {result.importantDates.length > 0 ? (
-                    result.importantDates.map(d => <InfoItem key={d.dateType} icon={Calendar} label={d.dateType} value={d.date} />)
-                  ) : (
-                    <p className='text-sm text-muted-foreground'>No dates found.</p>
-                  )}
+                  <h4 className="font-semibold text-md">Important Dates & Duration</h4>
+                  {result.importantDates.dates?.map(d => <InfoItem key={d.dateType} icon={Calendar} label={d.dateType} value={d.date} />)}
+                  {result.importantDates.contractDuration && <InfoItem icon={Clock} label="Contract Duration" value={result.importantDates.contractDuration} />}
+                  {result.importantDates.expectedCompletionDate && <InfoItem icon={CheckCircle} label="Expected Completion" value={result.importantDates.expectedCompletionDate} />}
+
                   <Separator />
                   <h4 className="font-semibold text-md">Obligations</h4>
                   {result.obligations.length > 0 ? (
