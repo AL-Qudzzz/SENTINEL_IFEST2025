@@ -136,17 +136,46 @@ export function UploadContractDialog() {
       return;
     }
 
-    const effectiveDate = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
-    const expirationDateISO = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+    const effectiveDateStr = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('effective'))?.date;
+    const expirationDateStr = result.importantDates.dates.find(d => d.dateType.toLowerCase().includes('expiration'))?.date;
+    const contractDurationStr = result.importantDates.contractDuration;
 
-    const getExpirationDate = () => {
-        if (expirationDateISO) {
-            const date = new Date(expirationDateISO);
+    const getExpirationDate = (): string => {
+        // Priority 1: Use explicit expiration date if valid
+        if (expirationDateStr) {
+            const date = new Date(expirationDateStr);
             if (!isNaN(date.getTime())) {
                 return date.toISOString();
             }
         }
-        // Default to one year from now if no valid date is found
+
+        // Priority 2: Calculate from effective date and duration
+        if (effectiveDateStr && contractDurationStr) {
+            const effectiveDate = new Date(effectiveDateStr);
+            if (!isNaN(effectiveDate.getTime())) {
+                const durationParts = contractDurationStr.toLowerCase().split(' ');
+                const amount = parseInt(durationParts[0], 10);
+                const unit = durationParts[1];
+
+                if (!isNaN(amount) && unit) {
+                    const newDate = new Date(effectiveDate);
+                    if (unit.startsWith('year')) {
+                        newDate.setFullYear(newDate.getFullYear() + amount);
+                        return newDate.toISOString();
+                    }
+                    if (unit.startsWith('month')) {
+                        newDate.setMonth(newDate.getMonth() + amount);
+                        return newDate.toISOString();
+                    }
+                    if (unit.startsWith('day')) {
+                        newDate.setDate(newDate.getDate() + amount);
+                        return newDate.toISOString();
+                    }
+                }
+            }
+        }
+
+        // Priority 3: Default to one year from now
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
         return oneYearFromNow.toISOString();
@@ -156,7 +185,7 @@ export function UploadContractDialog() {
       title: fileName || 'Untitled Contract',
       partner: result.metadata.partiesInvolved || 'N/A',
       status: 'Drafting',
-      effectiveDate: effectiveDate ? new Date(effectiveDate).toISOString() : new Date().toISOString(),
+      effectiveDate: effectiveDateStr ? new Date(effectiveDateStr).toISOString() : new Date().toISOString(),
       expirationDate: getExpirationDate(),
       contractValue: result.metadata.contractValue || 'N/A',
       textContent: contractText,
