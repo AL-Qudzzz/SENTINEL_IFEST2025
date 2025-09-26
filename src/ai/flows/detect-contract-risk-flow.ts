@@ -17,7 +17,7 @@ const DetectContractRiskInputSchema = z.object({
 });
 export type DetectContractRiskInput = z.infer<typeof DetectContractRiskInputSchema>;
 
-const DetectContractRiskOutputSchema = z.object({
+export const DetectContractRiskOutputSchema = z.object({
   riskScore: z.number().describe('Skor numerik yang menunjukkan tingkat risiko klausul (0-100).'),
   riskFactors: z.array(z.string()).describe('Faktor-faktor risiko spesifik yang diidentifikasi dalam klausul.'),
   suggestedAlternative: z.string().describe('Saran rumusan alternatif untuk klausul guna memitigasi risiko yang teridentifikasi.'),
