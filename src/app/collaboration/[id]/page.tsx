@@ -335,7 +335,7 @@ export default function CollaborationPage({ params: { id } }: { params: { id: st
     return (
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
         <header className="flex items-center gap-4">
-            <Link href="/contracts" className='hidden md:inline-block'>
+            <Link href="/collaboration" className='hidden md:inline-block'>
                 <ArrowLeft className="h-6 w-6 text-muted-foreground hover:text-foreground" />
             </Link>
             <div>
@@ -365,3 +365,5 @@ export default function CollaborationPage({ params: { id } }: { params: { id: st
         </div>
     );
 }
+
+    
