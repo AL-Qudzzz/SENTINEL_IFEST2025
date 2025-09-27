@@ -150,7 +150,7 @@ function ContractDetailView({ contract, contractId }: { contract: Contract, cont
       });
       setRedraftResult(result);
       toast({ title: 'Success', description: 'Contract has been redrafted.' });
-    } catch (err: any)
+    } catch (err: any) {
       let errorMessage = err.message || 'Failed to redraft contract.';
       if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
           errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
