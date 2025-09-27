@@ -7,8 +7,117 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Timeline, TimelineItem, TimelineConnector, TimelineHeader, TimelineTitle, TimelineIcon, TimelineDescription, TimelineTime } from './timeline';
 import { History } from 'lucide-react';
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+
+// Sub-components for the Timeline
+const Timeline = React.forwardRef<
+  HTMLOListElement,
+  React.ComponentProps<'ol'>
+>(({ className, ...props }, ref) => (
+  <ol
+    ref={ref}
+    className={cn('flex flex-col', className)}
+    {...props}
+  />
+));
+Timeline.displayName = 'Timeline';
+
+const TimelineItem = React.forwardRef<
+  HTMLLIElement,
+  React.ComponentProps<'li'>
+>(({ className, ...props }, ref) => (
+  <li
+    ref={ref}
+    className={cn('relative flex flex-col', className)}
+    {...props}
+  />
+));
+TimelineItem.displayName = 'TimelineItem';
+
+const TimelineConnector = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<'div'>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      'absolute left-[9px] top-[18px] -translate-x-1/2',
+      'h-full w-px bg-primary/20',
+      className
+    )}
+    {...props}
+  />
+));
+TimelineConnector.displayName = 'TimelineConnector';
+
+const TimelineHeader = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<'div'>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn('flex items-center gap-4', className)}
+    {...props}
+  />
+));
+TimelineHeader.displayName = 'TimelineHeader';
+
+const TimelineIcon = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<'div'>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      'flex h-5 w-5 items-center justify-center rounded-full bg-primary',
+      'z-10 shrink-0 text-primary-foreground',
+      className
+    )}
+    {...props}
+  />
+));
+TimelineIcon.displayName = 'TimelineIcon';
+
+const TimelineTime = React.forwardRef<
+  HTMLParagraphElement,
+  React.ComponentProps<'p'>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn('w-28 text-xs text-muted-foreground', className)}
+    {...props}
+  />
+));
+TimelineTime.displayName = 'TimelineTime';
+
+const TimelineTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.ComponentProps<'h3'>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn('font-semibold text-foreground', className)}
+    {...props}
+  />
+));
+TimelineTitle.displayName = 'TimelineTitle';
+
+const TimelineDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.ComponentProps<'p'>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn('pb-8 pt-2 pl-9 text-sm text-muted-foreground', className)}
+    {...props}
+  />
+));
+TimelineDescription.displayName = 'TimelineDescription';
+
+
 
 const changelogData = [
     {
@@ -77,6 +186,3 @@ export default function ChangelogClientPage() {
     </div>
   );
 }
-
-// Sub-components for the Timeline
-namespace-wrap-here
