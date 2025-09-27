@@ -28,6 +28,7 @@ import {
   PencilRuler,
   Save,
   Printer,
+  AlertCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -55,14 +56,14 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc } from 'firebase/firestore';
-import type { Contract, ContractComment, ApprovalStep, Status } from '@/lib/types';
+import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc, getDocs, limit } from 'firebase/firestore';
+import type { Contract, ContractComment, ApprovalStep, Status, ClauseRiskAssessment } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { useState, useEffect, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { generateContractTemplate, type GenerateContractTemplateOutput } from '@/ai/flows/generate-contract-template-flow';
+import { draftContract, type DraftContractOutput } from '@/ai/flows/draft-contract-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
@@ -323,9 +324,35 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
     const handleGenerateSmartDraft = async () => {
         setIsGeneratingDraft(true);
         setDraftError(null);
+        if (!firestore) {
+            setDraftError("Database service is not available.");
+            setIsGeneratingDraft(false);
+            return;
+        }
+    
         try {
-            const result = await generateContractTemplate({ originalContractText: contractContent });
-            setContractContent(result.templateContractText);
+            // 1. Fetch the latest risk analysis for this contract
+            const riskAssessmentsRef = collection(firestore, 'contracts', contractId, 'clauseRiskAssessments');
+            const q = query(riskAssessmentsRef, orderBy('createdAt', 'desc'), limit(1));
+            const querySnapshot = await getDocs(q);
+    
+            if (querySnapshot.empty) {
+                throw new Error("No risk analysis found for this contract. Please analyze the contract first on the 'Contracts' detail page.");
+            }
+            const latestRiskAnalysis = querySnapshot.docs[0].data() as ClauseRiskAssessment;
+    
+            // 2. Call the draftContract flow
+            const result = await draftContract({ 
+                originalContractText: contractContent,
+                riskAnalysis: {
+                    riskScore: latestRiskAnalysis.riskScore,
+                    riskFactors: latestRiskAnalysis.riskFactors ? [latestRiskAnalysis.riskFactors] : [],
+                    suggestedAlternative: latestRiskAnalysis.recommendation,
+                    rationale: latestRiskAnalysis.rationale,
+                }
+            });
+    
+            setContractContent(result.redraftedContractText);
             setIsDraftModified(true);
             toast({
                 title: 'Smart Draft Generated',
@@ -533,6 +560,7 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 )}
                 {draftError && (
                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Drafting Failed</AlertTitle>
                       <AlertDescription>{draftError}</AlertDescription>
                    </Alert>

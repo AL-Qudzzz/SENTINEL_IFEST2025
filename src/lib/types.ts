@@ -49,6 +49,18 @@ export interface ApprovalStep {
     approvedAt?: Timestamp | null;
 }
 
+export interface ClauseRiskAssessment {
+    id: string;
+    contractId: string;
+    clauseText: string;
+    riskScore: number;
+    riskFactors: string;
+    recommendation: string;
+    rationale: string;
+    createdAt: Timestamp;
+}
+
+
 export interface User {
     id: string; // Corresponds to Firebase Auth UID
     uid: string;
