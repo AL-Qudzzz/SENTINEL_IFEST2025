@@ -53,7 +53,6 @@ Dokumen ini mencatat evolusi, perbaikan bug, dan keputusan arsitektural yang dib
 
 -   **Peningkatan:** **Dokumentasi Terpusat.**
     -   Memindahkan catatan perubahan (changelog) ke dalam file `README.md` utama untuk menyediakan sumber informasi tunggal bagi pengembang.
-    -   Menghapus halaman `/changelog` dan tautan navigasi terkait untuk menyederhanakan antarmuka.
 
 ---
 

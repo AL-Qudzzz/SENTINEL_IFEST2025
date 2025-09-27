@@ -72,6 +72,11 @@ export function SpendingAnalysisChart({ contracts, isLoading }: { contracts: Wit
     );
   }
 
+  const truncateText = (text: string, length: number = 10) => {
+    if (text.length <= length) return text;
+    return `${text.substring(0, length)}...`;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -97,12 +102,13 @@ export function SpendingAnalysisChart({ contracts, isLoading }: { contracts: Wit
               axisLine={false}
               className="text-xs"
               width={80} // Adjust width to prevent label cropping
+              tickFormatter={(value) => truncateText(value)}
             />
             <XAxis dataKey="spending" type="number" hide />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent 
-                formatter={(value) => `Rp ${new Intl.NumberFormat('id-ID').format(Number(value))}`} 
+                formatter={(value, name, props) => [`Rp ${new Intl.NumberFormat('id-ID').format(Number(value))}`, props.payload.partner]} 
                 />}
             />
             <Bar
