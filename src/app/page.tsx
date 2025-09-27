@@ -114,15 +114,13 @@ export default function Home() {
           <h1 className="font-headline text-3xl font-bold tracking-tight text-foreground">
             Dashboard
           </h1>
-          <div className="text-muted-foreground min-h-5">
             {isAppUserLoading ? (
-                <Skeleton className="h-5 w-64" />
+                <Skeleton className="h-5 w-64 mt-1" />
             ) : (
-                <p>
+                <p className="text-muted-foreground min-h-5">
                     {appUser?.displayName ? welcomeMessage : defaultWelcomeMessage}
                 </p>
             )}
-          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <NotificationBell>
@@ -135,25 +133,21 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="grid flex-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardStats />
+      <main className="grid flex-1 items-start gap-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <DashboardStats />
+        </div>
 
-        <div className="grid gap-6 lg:col-span-2 lg:row-span-2">
+        <div className="grid gap-6 md:grid-cols-1">
           <RecentActivityTable />
         </div>
-
-        <div className="grid gap-6 lg:col-span-2">
-          <UpcomingDeadlines />
-          <RiskOverviewChart contracts={contracts} isLoading={isLoadingContracts} />
-        </div>
         
-        <div className="lg:col-span-2">
+        <div className="grid gap-6 md:grid-cols-2">
+            <UpcomingDeadlines />
+            <RiskOverviewChart contracts={contracts} isLoading={isLoadingContracts} />
             <SpendingAnalysisChart contracts={contracts} isLoading={isLoadingContracts} />
-        </div>
-        <div className="lg:col-span-2">
             <ProcessBottleneckChart contracts={contracts} isLoading={isLoadingContracts} />
         </div>
-
       </main>
     </div>
   );
