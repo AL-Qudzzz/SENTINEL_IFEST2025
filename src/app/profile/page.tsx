@@ -129,10 +129,6 @@ export default function ProfilePage() {
         };
         if (newPhotoURL) {
             authUpdateData.photoURL = newPhotoURL;
-        } else if (appUser?.photoURL) {
-            authUpdateData.photoURL = appUser.photoURL;
-        } else {
-            authUpdateData.photoURL = null;
         }
 
 
@@ -312,10 +308,12 @@ export default function ProfilePage() {
                                         </FormItem>
                                     )}
                                 />
-                                <div>
+                                <FormItem>
                                     <Label className="flex items-center gap-2"><Briefcase size={14}/> Role</Label>
-                                    <Input value={appUser?.role || 'N/A'} disabled />
-                                </div>
+                                    <FormControl>
+                                        <Input value={appUser?.role || 'N/A'} disabled />
+                                    </FormControl>
+                                </FormItem>
                             </div>
                             
                             {isEditing && (
@@ -407,3 +405,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
