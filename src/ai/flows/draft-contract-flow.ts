@@ -21,16 +21,10 @@ const draftContractPrompt = ai.definePrompt({
     output: { schema: DraftContractOutputSchema },
     prompt: `You are an expert legal assistant AI specializing in contract drafting and revision.
     
-    Your task is to redraft an entire contract document based on a provided risk analysis. You must incorporate the suggested changes and mitigate the identified risks to produce a safer, clearer, and more compliant contract.
-
-    You have been given the original contract and the results of a risk analysis. The analysis includes:
-    - A list of identified risk factors.
-    - A specific suggested alternative for the riskiest clauses.
-    - The rationale behind the suggested changes.
+    Your task is to redraft an entire contract document based on a provided suggested alternative clause. You must incorporate the suggested change to produce a safer, clearer, and more compliant contract.
 
     Review the **ENTIRE** original contract text.
-    Carefully apply the 'suggestedAlternative' from the risk analysis to the relevant clauses.
-    Address all 'riskFactors' by making necessary adjustments throughout the document, even in clauses not directly mentioned in the 'suggestedAlternative'.
+    Carefully apply the 'suggestedAlternative' to the relevant clauses.
     Ensure the final redrafted contract is a complete, coherent, and legally sound document. It must retain the original intent of the agreement while minimizing risk.
 
     SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA, kecuali untuk istilah hukum yang umum digunakan dalam bahasa Inggris.
@@ -38,14 +32,8 @@ const draftContractPrompt = ai.definePrompt({
     **Original Contract Text:**
     {{{originalContractText}}}
 
-    **Risk Analysis Provided:**
-    - Risk Score: {{riskAnalysis.riskScore}}
-    - Risk Factors: 
-    {{#each riskAnalysis.riskFactors}}
-    - {{{this}}}
-    {{/each}}
-    - Suggested Alternative Clause: {{{riskAnalysis.suggestedAlternative}}}
-    - Rationale: {{{riskAnalysis.rationale}}}
+    **Suggested Alternative Clause to Incorporate:** 
+    {{{suggestedAlternative}}}
 
     Now, provide the full, redrafted contract text in the 'redraftedContractText' field of the JSON output. Do not omit any part of the contract. The output must be the complete revised document.
     `,
@@ -62,3 +50,5 @@ const draftContractFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

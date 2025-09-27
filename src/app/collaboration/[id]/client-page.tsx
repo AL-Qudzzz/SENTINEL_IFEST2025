@@ -56,7 +56,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useDoc, useFirebase, useMemoFirebase, useCollection, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc, getDocs, limit } from 'firebase/firestore';
+import { doc, collection, query, orderBy, serverTimestamp, writeBatch, deleteDoc, updateDoc, getDocs, limit, addDoc } from 'firebase/firestore';
 import type { Contract, ContractComment, ApprovalStep, Status, ClauseRiskAssessment } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -64,6 +64,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { draftContract, type DraftContractOutput } from '@/ai/flows/draft-contract-flow';
+import { detectContractRisk, type DetectContractRiskOutput } from '@/ai/flows/detect-contract-risk-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
@@ -331,28 +332,36 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
         }
     
         try {
-            // 1. Fetch the latest risk analysis for this contract
+            // 1. Fetch latest risk analysis, OR run a new one if none exists.
             const riskAssessmentsRef = collection(firestore, 'contracts', contractId, 'clauseRiskAssessments');
             const q = query(riskAssessmentsRef, orderBy('createdAt', 'desc'), limit(1));
             const querySnapshot = await getDocs(q);
+            
+            let riskAnalysisResult: DetectContractRiskOutput;
     
             if (querySnapshot.empty) {
-                throw new Error("No risk analysis found for this contract. Please analyze the contract first on the 'Contracts' detail page.");
+                // No existing analysis, run a new one.
+                toast({ title: 'No analysis found', description: 'Running a new risk analysis first...' });
+                riskAnalysisResult = await detectContractRisk({ clauseText: contractContent });
+
+                // Save the new analysis to Firestore
+                await addDoc(riskAssessmentsRef, {
+                    ...riskAnalysisResult,
+                    contractId: contractId,
+                    clauseText: contractContent,
+                    createdAt: serverTimestamp(),
+                });
+            } else {
+                riskAnalysisResult = querySnapshot.docs[0].data() as DetectContractRiskOutput;
             }
-            const latestRiskAnalysis = querySnapshot.docs[0].data() as ClauseRiskAssessment;
     
-            // 2. Call the draftContract flow
-            const result = await draftContract({ 
+            // 2. Call the draftContract flow with the analysis result.
+            const draftResult = await draftContract({ 
                 originalContractText: contractContent,
-                riskAnalysis: {
-                    riskScore: latestRiskAnalysis.riskScore,
-                    riskFactors: latestRiskAnalysis.riskFactors ? [latestRiskAnalysis.riskFactors] : [],
-                    suggestedAlternative: latestRiskAnalysis.recommendation,
-                    rationale: latestRiskAnalysis.rationale,
-                }
+                suggestedAlternative: riskAnalysisResult.suggestedAlternative,
             });
     
-            setContractContent(result.redraftedContractText);
+            setContractContent(draftResult.redraftedContractText);
             setIsDraftModified(true);
             toast({
                 title: 'Smart Draft Generated',
@@ -797,3 +806,5 @@ export default function CollaborationClientPage({ id }: { id: string }) {
         </div>
     );
 }
+
+    

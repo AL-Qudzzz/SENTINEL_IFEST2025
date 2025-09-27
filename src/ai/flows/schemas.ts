@@ -17,7 +17,7 @@ export type DetectContractRiskOutput = z.infer<typeof DetectContractRiskOutputSc
 
 export const DraftContractInputSchema = z.object({
   originalContractText: z.string().describe('The full original text of the contract to be redrafted.'),
-  riskAnalysis: DetectContractRiskOutputSchema.describe('The results from the detectContractRisk flow, including risk factors and suggested alternatives.'),
+  suggestedAlternative: z.string().describe('The suggested alternative clause to incorporate into the new draft.'),
 });
 export type DraftContractInput = z.infer<typeof DraftContractInputSchema>;
 
@@ -59,3 +59,5 @@ export const SemanticSearchOutputSchema = z.object({
   matchingContractIds: z.array(z.string()).describe('An array of contract IDs that best match the search query.'),
 });
 export type SemanticSearchOutput = z.infer<typeof SemanticSearchOutputSchema>;
+
+    
