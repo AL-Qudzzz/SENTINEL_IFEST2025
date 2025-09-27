@@ -137,11 +137,15 @@ export default function RiskAnalysisPage() {
       }
 
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      let errorMessage = err.message || 'An unexpected error occurred.';
+      if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+        errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      }
+      setError(errorMessage);
       toast({
         variant: 'destructive',
         title: 'Analysis Failed',
-        description: err.message || 'An unexpected error occurred.',
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
@@ -229,7 +233,7 @@ export default function RiskAnalysisPage() {
         </div>
 
         <div className="lg:col-span-3">
-          {error && (
+          {error && !result && ( // Only show the main error if there's no result card
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Analysis Failed</AlertTitle>

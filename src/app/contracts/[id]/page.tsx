@@ -121,11 +121,15 @@ function ContractDetailView({ contract, contractId }: { contract: Contract, cont
       }
 
     } catch (err: any) {
-      setError(err.message || 'Failed to analyze contract.');
+      let errorMessage = err.message || 'Failed to analyze contract.';
+      if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      }
+      setError(errorMessage);
        toast({
         variant: 'destructive',
         title: 'Analysis Failed',
-        description: err.message || 'An unexpected error occurred.',
+        description: errorMessage,
       });
     } finally {
       setIsLoadingAnalysis(false);
@@ -146,12 +150,16 @@ function ContractDetailView({ contract, contractId }: { contract: Contract, cont
       });
       setRedraftResult(result);
       toast({ title: 'Success', description: 'Contract has been redrafted.' });
-    } catch (err: any) {
-      setError(err.message || 'Failed to redraft contract.');
+    } catch (err: any)
+      let errorMessage = err.message || 'Failed to redraft contract.';
+      if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      }
+      setError(errorMessage);
       toast({
         variant: 'destructive',
         title: 'Redraft Failed',
-        description: err.message || 'An unexpected error occurred.',
+        description: errorMessage,
       });
     } finally {
       setIsLoadingRedraft(false);
@@ -381,4 +389,3 @@ export default function ContractDetailPage({ params: { id } }: { params: { id: s
 }
 
     
-

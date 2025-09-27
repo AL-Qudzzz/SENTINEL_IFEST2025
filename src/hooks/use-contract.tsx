@@ -105,12 +105,16 @@ export const ContractProvider = ({ children }: { children: ReactNode }) => {
                 description: `Found ${result.matchingContractIds.length} relevant contract(s).`,
             });
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Semantic search failed:', error);
+            let errorMessage = error.message || 'The AI search could not be completed.';
+            if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+                errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+            }
             toast({
                 variant: 'destructive',
                 title: 'Search Failed',
-                description: 'The AI search could not be completed.',
+                description: errorMessage,
             });
             setIsSemanticSearch(false);
             setSemanticSearchResults([]);

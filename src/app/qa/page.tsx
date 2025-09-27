@@ -59,7 +59,11 @@ export default function QAPage() {
       const output = await answerContractQuestions({ contractText, question });
       setResult(output);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      let errorMessage = err.message || 'An unexpected error occurred.';
+      if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

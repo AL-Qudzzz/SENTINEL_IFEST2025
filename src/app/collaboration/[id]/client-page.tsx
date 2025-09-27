@@ -332,11 +332,15 @@ function CollaborationView({ contract, contractId }: { contract: Contract, contr
                 description: 'The contract text has been updated. Review and save the changes.',
             });
         } catch (err: any) {
-            setDraftError(err.message || 'Failed to generate smart draft.');
+            let errorMessage = err.message || 'Failed to generate smart draft.';
+            if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+                errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+            }
+            setDraftError(errorMessage);
             toast({
                 variant: 'destructive',
                 title: 'Drafting Failed',
-                description: err.message || 'An unexpected error occurred.',
+                description: errorMessage,
             });
         } finally {
             setIsGeneratingDraft(false);

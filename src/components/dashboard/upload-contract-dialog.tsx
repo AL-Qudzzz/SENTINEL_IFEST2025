@@ -130,7 +130,11 @@ export function UploadContractDialog() {
   
     } catch (err: any) {
       console.error('File parsing error:', err);
-      setError(err.message || "An unexpected error occurred during file processing.");
+      let errorMessage = err.message || "An unexpected error occurred during file processing.";
+      if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      }
+      setError(errorMessage);
     } finally {
       setIsParsing(false);
     }
@@ -150,7 +154,11 @@ export function UploadContractDialog() {
       const output = await extractContractData({ contractText });
       setResult(output);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred during analysis.');
+      let errorMessage = err.message || 'An unexpected error occurred during analysis.';
+      if (typeof errorMessage === 'string' && errorMessage.includes('503')) {
+          errorMessage = "The AI service is temporarily unavailable. Please try again in a few moments.";
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
