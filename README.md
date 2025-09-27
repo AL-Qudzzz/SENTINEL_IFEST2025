@@ -36,7 +36,7 @@ Berikut adalah status pengembangan fitur-fitur utama dalam aplikasi Sentinel.
 ### Modul Analitik: Cortex Analytics & Intelligence
 - [X] **Dashboard Analitik Interaktif**
   - [X] Visualisasi data performa siklus kontrak (statistik, aktivitas, ringkasan risiko).
-  - [ ] Analisis pengeluaran dan identifikasi *bottleneck* proses.
+  - [X] Analisis pengeluaran dan identifikasi *bottleneck* proses.
 - [X] **Pencarian Semantik**
   - [X] Kemampuan mencari kontrak menggunakan bahasa alami (contoh: "tampilkan semua kontrak yang akan berakhir dalam 6 bulan").
 - [X] **Asisten AI Generatif**
@@ -49,7 +49,7 @@ Dokumen ini mencatat evolusi, perbaikan bug, dan keputusan arsitektural yang dib
 
 ---
 
-### **Versi 1.2.1** - *18 Oktober 2024*
+### **Versi 1.2.1** - *27 Septermber 2025*
 
 -   **Peningkatan:** **Dokumentasi Terpusat.**
     -   Memindahkan catatan perubahan (changelog) ke dalam file `README.md` utama untuk menyediakan sumber informasi tunggal bagi pengembang.
@@ -57,7 +57,7 @@ Dokumen ini mencatat evolusi, perbaikan bug, dan keputusan arsitektural yang dib
 
 ---
 
-### **Versi 1.2.0** - *18 Oktober 2024*
+### **Versi 1.2.0** - *27 september 2025*
 
 -   **Fitur:** **Pembaruan Foto Profil Pengguna.**
     -   Mengimplementasikan fungsionalitas bagi pengguna untuk mengunggah dan memperbarui foto profil mereka.
@@ -69,7 +69,7 @@ Dokumen ini mencatat evolusi, perbaikan bug, dan keputusan arsitektural yang dib
 
 ---
 
-### **Versi 1.1.0** - *17 Oktober 2024*
+### **Versi 1.1.0** - *26 September 2025*
 
 -   **Perbaikan Kritis:** **Logika Tanggal Kedaluwarsa Kontrak.**
     -   Memperbaiki bug fatal di mana sistem salah menggunakan tanggal hari ini (`new Date()`) sebagai dasar untuk menghitung tanggal kedaluwarsa kontrak jika tanggal tersebut tidak ditemukan secara eksplisit oleh AI.
@@ -82,7 +82,7 @@ Dokumen ini mencatat evolusi, perbaikan bug, dan keputusan arsitektural yang dib
 
 ---
 
-### **Versi 1.0.0** - *16 Oktober 2024*
+### **Versi 1.0.0** - *26 september 2025*
 
 -   **Rilis Awal:** **Inisialisasi Proyek Sentinel.**
     -   **Dashboard Utama:** Menyediakan ringkasan statistik kontrak, aktivitas terbaru, tenggat waktu yang akan datang, dan gambaran umum risiko.

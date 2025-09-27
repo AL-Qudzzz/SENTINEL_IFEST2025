@@ -20,8 +20,8 @@ export interface Contract {
     contractValue: string;
     textContent: string;
     fileType: string;
-    createdAt: Timestamp | Date;
-    updatedAt?: Timestamp | Date;
+    createdAt: Timestamp | Date | string;
+    updatedAt?: Timestamp | Date | string;
     riskScore?: number;
 }
 

@@ -9,11 +9,13 @@ import { UpcomingDeadlines } from '@/components/dashboard/upcoming-deadlines';
 import { RiskOverviewChart } from '@/components/dashboard/risk-overview-chart';
 import { UploadContractDialog } from '@/components/dashboard/upload-contract-dialog';
 import { useCollection, useFirebase, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
-import type { Contract, User as AppUser } from '@/lib/types';
+import { collection, query, orderBy, doc, getDocs } from 'firebase/firestore';
+import type { Contract, User as AppUser, ApprovalStep, WithId } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { Button } from '@/components/ui/button';
+import { SpendingAnalysisChart } from '@/components/dashboard/spending-analysis-chart';
+import { ProcessBottleneckChart } from '@/components/dashboard/process-bottleneck-chart';
 
 function DashboardStats() {
   const { firestore } = useFirebase();
@@ -98,9 +100,10 @@ export default function Home() {
     () => (firestore ? query(collection(firestore, 'contracts'), orderBy('createdAt', 'desc')) : null),
     [firestore]
   );
-  const { data: contracts, isLoading: isLoadingContracts } = useCollection<Contract>(contractsQuery);
+  const { data: contracts, isLoading: isLoadingContracts } = useCollection<WithId<Contract>>(contractsQuery);
+  
 
-  const welcomeMessage = `Welcome back, ${appUser?.displayName ?? ''}! Here's a summary of your contract landscape.`;
+  const welcomeMessage = `Welcome back, ${appUser?.displayName}! Here's a summary of your contract landscape.`;
   const defaultWelcomeMessage = "Welcome back! Here's a summary of your contract landscape.";
 
 
@@ -143,6 +146,14 @@ export default function Home() {
           <UpcomingDeadlines />
           <RiskOverviewChart contracts={contracts} isLoading={isLoadingContracts} />
         </div>
+        
+        <div className="lg:col-span-2">
+            <SpendingAnalysisChart contracts={contracts} isLoading={isLoadingContracts} />
+        </div>
+        <div className="lg:col-span-2">
+            <ProcessBottleneckChart contracts={contracts} isLoading={isLoadingContracts} />
+        </div>
+
       </main>
     </div>
   );
